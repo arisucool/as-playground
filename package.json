@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "ng serve --host=0.0.0.0 --disable-host-check --ssl",
+    "deploy": "ng deploy --base-href=/as-playground/ --repo=https://github.com/arisucool/as-playground.git",
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
@@ -59,6 +60,7 @@
     "@commitlint/config-conventional": "^16.0.0",
     "@types/jasmine": "~3.6.0",
     "@types/node": "^12.11.1",
+    "angular-cli-ghpages": "^1.0.0",
     "codelyzer": "^6.0.0",
     "cz-conventional-changelog": "^3.3.0",
     "husky": "^7.0.4",

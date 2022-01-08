@@ -1,6 +1,6 @@
 # as-playground
 
-https://arisucool-as-playground.herokuapp.com/
+https://arisucool.github.io/as-playground/
 
 ---
 
@@ -17,10 +17,10 @@ https://arisucool-as-playground.herokuapp.com/
 
 ### WebRTC (SkyWay) の使用目的は？
 
-テキストコメントの送受信を行う際、なるべく、サーバを介さずに本人の端末間で完結させるためです。
+本人の端末間でコメントを転送する際、なるべくサーバを介さずに、その端末間で完結させるために WebRTC を使用しています。
 また、SkyWay を利用しているのは開発工数を下げるためです。
 
-尚、アソビステージの映像や音声は一切扱っていません。今後も扱いません。
+※アソビステージの映像や音声は一切扱っていません。今後も扱いません！
 
 ### 荒らし対策・踏み台対策はありますか？
 

@@ -4,21 +4,20 @@
   <p>スマートフォンなどで読み取ってください:</p>
   <p>
     <qrcode
-      [qrdata]="clientUrl"
+      [qrdata]="viewerUrl"
       [width]="128"
       [errorCorrectionLevel]="'M'"
-    ></qrcode
-    ><br />
-    <span style="font-size: 0.8rem"
-      ><a
-        [href]="clientUrl"
+    ></qrcode>
+    <span style="font-size: 0.7rem">
+      <a
+        [href]="viewerUrl"
         style="color: #444; text-decoration: none"
         target="_blank"
         rel="noopener"
       >
-        {{ clientUrl }}
-      </a></span
-    >
+        {{ viewerUrl }}
+      </a>
+    </span>
   </p>
 </div>
 
