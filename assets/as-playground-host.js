@@ -33,7 +33,7 @@
         return;
       }
 
-      let hostUrl = scriptUrl.replace(/assets\/as-playground-host\.js/g, "");
+      let hostUrl = scriptUrl.replace(/\/assets\/as-playground-host\.js/g, "");
 
       this.iframeElem = document.createElement("iframe");
       this.iframeElem.src = `${hostUrl}/host`;
