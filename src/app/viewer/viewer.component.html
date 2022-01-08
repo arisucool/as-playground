@@ -1,0 +1,17 @@
+<div class="status">
+  <p *ngIf="!errorText && !peer">初期化中...</p>
+  <p *ngIf="!errorText && peer && !dataConnection">ホストへ接続しています...</p>
+  <p *ngIf="!errorText && peer && dataConnection && comments.length == 0">
+    新着コメントを待機しています...
+  </p>
+  <p *ngIf="errorText">エラー: {{ errorText }}</p>
+</div>
+
+<mat-list>
+  <mat-list-item *ngFor="let comment of comments">
+    <h3 matLine>{{ comment.nickname }}</h3>
+    <p matLine>
+      <span> {{ comment.comment }} </span>
+    </p>
+  </mat-list-item>
+</mat-list>

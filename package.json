@@ -1,7 +1,8 @@
 {
-  "name": "asobi-stage-playground",
+  "name": "as-playground",
   "version": "0.0.0",
   "scripts": {
+    "dev": "ng serve --host=0.0.0.0 --disable-host-check --ssl",
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",

@@ -1,17 +1,26 @@
-# asobi-stage-playground
+# as-playground
+
+https://arisucool-as-playground.herokuapp.com/
+
+---
 
 ## できること
 
 - コメントのスマートフォン連携
 
-  - アソビステージのコメントをスマートフォンなどの別端末・別画面から閲覧できます。
+  - アソビステージのコメントを本人の別端末 (スマートフォンなど) から閲覧できます。
+  - 例: テレビやプロジェクタなどの大画面でライブを鑑賞しながら、手元にあるスマートフォンで快適にコメントを閲覧...。
+
+---
 
 ## Q＆A
 
 ### WebRTC (SkyWay) の使用目的は？
 
-なるべくサーバを介さず、テキストチャットの送受信を行うためです。映像や音声は扱っていません。
+テキストコメントの送受信を行う際、なるべく、サーバを介さずに本人の端末間で完結させるためです。
 また、SkyWay を利用しているのは開発工数を下げるためです。
+
+尚、映像や音声は扱っていません。今後も扱う予定はありません。
 
 ### 荒らし対策・踏み台対策はありますか？
 
@@ -23,28 +32,50 @@
 アソビステージは、アソビストア (BANDAI NAMCO Entertainment Inc.) 様が運営されているサービスであり商標です。
 対して、本プロジェクトは関係のない個人が開発しています。
 
-## 開発について
+---
 
-### Development server
+## 開発の初め方
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+### 1. SkyWay のアプリケーション登録
 
-### Code scaffolding
+Skyway Community Edition (無料版) でアカウント登録し、アプリケーション登録を行ってください。
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+### 2. ソースコードの取得
 
-### Build
+```
+$ git clone git@github.com:arisucool/as-playground.git
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+$ npm install
+```
 
-### Running unit tests
+### 3. 環境設定ファイルの編集
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+環境設定ファイルを開き、SkyWay の API キーを記述してください。
 
-### Running end-to-end tests
+`src/environments/environment.ts`:
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+```
+export const environment = {
+  production: false,
+  skyWayApiKey: '********************************'
+};
+```
 
-### Further help
+`src/environments/environment.prod.ts`:
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```
+export const environment = {
+  production: true,
+  skyWayApiKey: '********************************'
+};
+```
+
+### 4. サーバの起動
+
+以下のようにコマンドを実行してください。
+
+```
+$ ng run dev
+```
+
+開発用サーバが起動しますので、Web ブラウザで https://localhost:4200/ を開いてください。

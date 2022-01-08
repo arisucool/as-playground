@@ -1,0 +1,25 @@
+<div *ngIf="!peerId">しばらくお待ちください...</div>
+
+<div *ngIf="peerId && !dataConnection">
+  <p>スマートフォンなどで読み取ってください:</p>
+  <p>
+    <qrcode
+      [qrdata]="clientUrl"
+      [width]="128"
+      [errorCorrectionLevel]="'M'"
+    ></qrcode
+    ><br />
+    <span style="font-size: 0.8rem"
+      ><a
+        [href]="clientUrl"
+        style="color: #444; text-decoration: none"
+        target="_blank"
+        rel="noopener"
+      >
+        {{ clientUrl }}
+      </a></span
+    >
+  </p>
+</div>
+
+<div *ngIf="peerId && dataConnection">端末が接続されています</div>

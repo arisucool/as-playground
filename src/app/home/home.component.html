@@ -1,0 +1,51 @@
+<h2>できること</h2>
+
+<ul>
+  <li>コメントのスマートフォン連携</li>
+</ul>
+
+<hr />
+<h2>使用方法</h2>
+
+<h3>1. ブックマークレットの追加</h3>
+
+<h4>PC</h4>
+
+<p>以下のボタンをブックマークバーへドラッグアンドドロップしてください。</p>
+<p>
+  <a [href]="bookmarklet" mat-raised-button color="primary">as-playground</a>
+</p>
+
+<h4>iOS / iPad OS</h4>
+
+<ol>
+  <li>
+    Safari にて、適当なページ (例えば、現在のページ)
+    を「お気に入りへ追加」してください。
+  </li>
+  <li>
+    お気に入り一覧を開いて、先ほどブックマークしたページをロングタップし、「編集」をタップしてください。
+  </li>
+  <li>
+    以下の内容をコピーして、URL欄へ貼り付けてください。<br /><br />
+    <mat-form-field appearance="fill" style="width: 50%">
+      <textarea matInput rows="5" cols="10" readonly>{{
+        bookmarkletRaw
+      }}</textarea>
+    </mat-form-field>
+  </li>
+</ol>
+
+<h3>2. as-playground の起動</h3>
+
+<ol>
+  <li>
+    アソビステージにて、コメントのある画面 (エントランス画面、公演視聴画面など)
+    を開いてください。
+  </li>
+  <li>先ほど保存したブックマークレットをクリックしてください。</li>
+  <li>
+    画面右下に as-playground
+    という領域が表示されので、画面の指示に従って操作してください。
+  </li>
+</ol>
