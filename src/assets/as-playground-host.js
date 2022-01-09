@@ -114,7 +114,7 @@
         });
       }
 
-      return newComments;
+      return newComments.slice().reverse();
     }
   }
 
