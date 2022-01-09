@@ -8,3 +8,9 @@
   position: absolute;
   height: 64px;
 }
+
+@media (max-width: 599px) {
+  .toolbar {
+    height: 56px;
+  }
+}
