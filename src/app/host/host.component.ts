@@ -29,15 +29,26 @@ export class HostComponent implements OnInit {
   }
 
   initPeer(): void {
+    if (this.peer) {
+      this.peer = null;
+    }
+
     console.log('Initializing Peer...');
     this.peer = new Peer({ key: environment.skyWayApiKey });
 
     this.peer.on('open', () => {
       this.peerId = this.peer.id;
-
       this.viewerUrl = this.generateViewerUrl(this.peerId);
 
+      this.setIframeVisiblity(true);
+
       this.changeDetectorRef.detectChanges();
+    });
+
+    this.peer.on('close', () => {
+      window.setTimeout(() => {
+        this.initPeer();
+      }, 5000);
     });
 
     this.peer.on('connection', (dataConnection) => {
@@ -47,10 +58,13 @@ export class HostComponent implements OnInit {
       }
 
       dataConnection.once('open', () => {
+        console.log('Data connection opened.');
         this.transferMessageToViewer({
           type: 'COMMENTS_RECEIVED',
           comments: this.latestComments,
         });
+
+        this.setIframeVisiblity(false);
       });
 
       dataConnection.on('data', (data) => {
@@ -58,7 +72,9 @@ export class HostComponent implements OnInit {
       });
 
       dataConnection.once('close', () => {
+        console.log('Data connection closed.');
         this.dataConnection = null;
+        this.setIframeVisiblity(true);
         this.changeDetectorRef.detectChanges();
       });
 
@@ -83,6 +99,17 @@ export class HostComponent implements OnInit {
       },
       false
     );
+  }
+
+  setIframeVisiblity(value: boolean) {
+    this.transferMessageToHostScript({
+      type: 'SET_IFRAME_VISIBILITY',
+      value: value,
+    });
+  }
+
+  transferMessageToHostScript(message: any) {
+    window.parent.postMessage(message, '*');
   }
 
   transferMessageToViewer(message: any) {
