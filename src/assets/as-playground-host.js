@@ -33,10 +33,13 @@
         return;
       }
 
-      let hostUrl = scriptUrl.replace(/\/assets\/as-playground-host\.js/g, "");
+      let hostUrl = scriptUrl.replace(
+        /\/assets\/as-playground-host\.js\?t=\d+/g,
+        ""
+      );
 
       this.iframeElem = document.createElement("iframe");
-      this.iframeElem.src = `${hostUrl}/host`;
+      this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}`;
       this.iframeElem.style.bottom = "0px";
       this.iframeElem.style.right = "0px";
       this.iframeElem.style.position = "fixed";

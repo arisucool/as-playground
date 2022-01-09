@@ -25,7 +25,7 @@ export class HomeComponent implements OnInit {
       hostScriptUrl = `${window.location.protocol}//${window.location.host}/${hostScriptUrl}`;
     }
 
-    this.bookmarkletRaw = `javascript:(function(d,u,s){s=d.createElement('script');s.type='text/javascript';s.src=u;d.body.appendChild(s)})(document, '${hostScriptUrl}');`;
+    this.bookmarkletRaw = `javascript:(function(d,u,s){s=d.createElement('script');s.type='text/javascript';s.src=u+'?t='+new Date().getTime();d.body.appendChild(s)})(document, '${hostScriptUrl}');`;
     this.bookmarklet = this.sanitizer.bypassSecurityTrustUrl(
       this.bookmarkletRaw
     );
