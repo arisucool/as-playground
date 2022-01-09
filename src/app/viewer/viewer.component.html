@@ -1,3 +1,24 @@
+<div class="toolbar">
+  <button
+    (click)="setNoSleep(true)"
+    *ngIf="!enableNoSleep"
+    mat-icon-button
+    aria-label="画面スリープを抑制する"
+    matTooltip="画面スリープを抑制する"
+  >
+    <mat-icon>lock_open</mat-icon>
+  </button>
+  <button
+    (click)="setNoSleep(false)"
+    *ngIf="enableNoSleep"
+    mat-icon-button
+    aria-label="画面スリープの抑制を解除する"
+    matTooltip="画面スリープの抑制を解除する"
+  >
+    <mat-icon>lock</mat-icon>
+  </button>
+</div>
+
 <div class="status">
   <p *ngIf="!errorText && !peer">初期化中...</p>
   <p *ngIf="!errorText && peer && !dataConnection">ホストへ接続しています...</p>
