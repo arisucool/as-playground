@@ -1,5 +1,7 @@
 # as-playground
 
+アソビステージをちょっと便利にする遊び場 by arisu.cool 🍓
+
 https://arisucool.github.io/as-playground/
 
 ---
@@ -26,6 +28,12 @@ https://arisucool.github.io/as-playground/
 
 アソビステージを閲覧している各端末 (PC など) に対し、別端末 (スマートフォンなど) を 1 台までしか連携できません。
 また他者から推測困難なランダムなトークンによって接続します。
+
+### Chrome 拡張機能やユーザスクリプトではなく、ブックマークレットにしている理由は？
+
+メイン端末 (アソビステージを閲覧する端末) として、PC だけでなく、iPad や iOS なども使用できるようにするためです。
+
+例えば、iPadOS の Google Chrome でライブ鑑賞しながら、iPhone でコメントを閲覧することができます。
 
 ### アソビステージについて
 
