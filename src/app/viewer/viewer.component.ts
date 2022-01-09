@@ -73,6 +73,8 @@ export class ViewerComponent implements OnInit {
       });
 
       this.dataConnection.on('data', (data) => {
+        data = JSON.parse(decodeURIComponent(data));
+
         console.log('Message received on DataConnection', data);
         if (!data.type) return;
         if (data.type == 'COMMENTS_RECEIVED') {

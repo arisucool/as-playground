@@ -91,7 +91,7 @@ export class HostComponent implements OnInit {
       return;
     }
     console.log('transferMessageToViewer', message);
-    this.dataConnection.send(message);
+    this.dataConnection.send(encodeURIComponent(JSON.stringify(message)));
   }
 
   onReceiveMessageByViewer(message: string) {}
