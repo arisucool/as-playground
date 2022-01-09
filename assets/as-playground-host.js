@@ -95,7 +95,6 @@
         let nickname = nicknameElem.innerText;
         let comment = commentElem.innerText;
         if (!nickname || !comment) continue;
-        console.log(nickname, comment);
 
         let commentId =
           btoa(encodeURIComponent(nickname)) +
