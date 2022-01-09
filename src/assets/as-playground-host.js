@@ -63,7 +63,7 @@
           },
           "*"
         );
-      }, 1000);
+      }, 500);
     }
 
     stopCommentWatching() {
