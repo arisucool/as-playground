@@ -12,6 +12,24 @@
       this.iframeElem = null;
       this.commentWatchingTimerId = null;
 
+      window.addEventListener(
+        "message",
+        (message) => {
+          if (!message.data || !message.data.type) return;
+
+          if (message.origin.indexOf(this.getOwnBaseUrl()) == -1) {
+            console.log("Message received from other frame", message);
+          }
+
+          console.log("Message received from iframe", message);
+
+          if (message.data.type == "SET_IFRAME_VISIBILITY") {
+            this.setIframeVisiblity(message.data.value);
+          }
+        },
+        false
+      );
+
       this.loadIframe();
       this.startCommentWatching();
     }
@@ -26,17 +44,18 @@
       return null;
     }
 
-    loadIframe() {
+    getOwnBaseUrl() {
       let scriptUrl = this.getOwnScriptUrl();
       if (!scriptUrl) {
         window.alert("エラー: スクリプトのURLが不明です");
         return;
       }
 
-      let hostUrl = scriptUrl.replace(
-        /\/assets\/as-playground-host\.js\?t=\d+/g,
-        ""
-      );
+      return scriptUrl.replace(/\/assets\/as-playground-host\.js\?t=\d+/g, "");
+    }
+
+    loadIframe() {
+      const hostUrl = this.getOwnBaseUrl();
 
       this.iframeElem = document.createElement("iframe");
       this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}`;
@@ -47,6 +66,14 @@
       this.iframeElem.style.height = "320px";
       this.iframeElem.style.zIndex = "10000";
       document.body.appendChild(this.iframeElem);
+    }
+
+    setIframeVisiblity(value) {
+      if (value) {
+        this.iframeElem.style.display = "block";
+      } else {
+        this.iframeElem.style.display = "none";
+      }
     }
 
     startCommentWatching() {
@@ -96,6 +123,10 @@
         let comment = commentElem.innerText;
         if (!nickname || !comment) continue;
 
+        let nicknameColor = nicknameElem.style.color
+          ? nicknameElem.style.color
+          : "#000000";
+
         let commentId =
           btoa(encodeURIComponent(nickname)) +
           btoa(encodeURIComponent(comment));
@@ -103,6 +134,7 @@
 
         this.comments[commentId] = {
           nickname: nickname,
+          nicknameColor: nicknameColor,
           comment: comment,
           receivedDate: new Date(),
         };
@@ -110,6 +142,7 @@
         newComments.push({
           id: commentId,
           nickname: nickname,
+          nicknameColor: nicknameColor,
           comment: comment,
           receivedDate: new Date(),
         });
