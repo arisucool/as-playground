@@ -24,6 +24,7 @@ export class ViewerComponent implements OnInit {
   public comments: {
     id: string;
     nickname: string;
+    nicknameColor: string;
     comment: string;
     receivedDate: Date;
   }[] = [];

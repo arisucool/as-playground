@@ -30,7 +30,9 @@
 
 <mat-list>
   <mat-list-item *ngFor="let comment of comments.slice().reverse()">
-    <h3 matLine>{{ comment.nickname }}</h3>
+    <h3 matLine [style.color]="comment.nicknameColor">
+      {{ comment.nickname }}
+    </h3>
     <p matLine>
       <span> {{ comment.comment }} </span>
     </p>

@@ -123,6 +123,10 @@
         let comment = commentElem.innerText;
         if (!nickname || !comment) continue;
 
+        let nicknameColor = nicknameElem.style.color
+          ? nicknameElem.style.color
+          : "#000000";
+
         let commentId =
           btoa(encodeURIComponent(nickname)) +
           btoa(encodeURIComponent(comment));
@@ -130,6 +134,7 @@
 
         this.comments[commentId] = {
           nickname: nickname,
+          nicknameColor: nicknameColor,
           comment: comment,
           receivedDate: new Date(),
         };
@@ -137,6 +142,7 @@
         newComments.push({
           id: commentId,
           nickname: nickname,
+          nicknameColor: nicknameColor,
           comment: comment,
           receivedDate: new Date(),
         });
