@@ -37,6 +37,9 @@ export class HostComponent implements OnInit {
   public selectedRecordedEventName: string;
   public commentBeginningOffsetTimeSeconds: number = -1;
 
+  // 汎用
+  public objectKeys = Object.keys;
+
   constructor(
     private route: ActivatedRoute,
     private changeDetectorRef: ChangeDetectorRef,

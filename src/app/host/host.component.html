@@ -80,10 +80,13 @@
       !selectedRecordedEventName && commentBeginningOffsetTimeSeconds == -1
     "
   >
-    <p>
-      コメントを再生するには、映像を一時停止したのち、<br />イベントを選んでください
+    <p *ngIf="objectKeys(commentRecordedEvents).length == 0">
+      記録されたコメントがありません。<br /><br />
+      ※
+      コメントを再生するには、リアルタイム視聴中に「コメントの記録」を実行しておく必要があります。
     </p>
-    <p>
+    <p *ngIf="1 <= objectKeys(commentRecordedEvents).length">
+      コメントを再生するには、映像を一時停止した状態で<br />以下からイベントを選んでください<br /><br />
       <mat-form-field appearance="fill" floatLabel="always">
         <mat-label>コメントを再生するイベント</mat-label>
         <mat-select
@@ -148,11 +151,25 @@
         映像の再生位置: {{ playerCurrentTimeSeconds }} 秒</span
       >
     </p>
+    <p>&nbsp;</p>
 
     <p>
       <button
         mat-raised-button
         (click)="commentBeginningOffsetTimeSeconds = -1"
+      >
+        開始オフセットを再調整
+      </button>
+
+      &nbsp;
+
+      <button
+        mat-raised-button
+        color="warn"
+        (click)="
+          selectedRecordedEventName = null;
+          commentBeginningOffsetTimeSeconds = -1
+        "
       >
         コメント再生を終了
       </button>
