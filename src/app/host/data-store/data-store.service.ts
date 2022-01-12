@@ -12,7 +12,7 @@ export class DataStoreService {
     name: 'Comments',
     columns: {
       id: { primaryKey: true, autoIncrement: false, unique: true },
-      eventName: { notNull: false, dataType: 'string' },
+      eventName: { notNull: true, dataType: 'string' },
       nickname: { notNull: true, dataType: 'string' },
       nicknameColor: { notNull: true, dataType: 'string' },
       comment: { notNull: true, dataType: 'string' },

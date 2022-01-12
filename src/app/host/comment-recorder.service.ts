@@ -17,16 +17,29 @@ export class CommentRecorderService {
     this.dbConnection = await this.dataStore.getDatabaseConnection();
   }
 
-  async getCommentsByEventName(eventName: string) {
+  async getEventNames(): Promise<string[]> {
     await this.connectDb();
-    return await this.dbConnection.select<Comment[]>({
+    const items = await this.dbConnection.select({
       from: 'Comments',
-      where: { eventName: eventName },
+      groupBy: 'eventName',
+    });
+    return items.map((item: any) => {
+      return item.eventName;
     });
   }
 
-  async registerComment(eventName: string, comment: Comment) {
+  async getCommentsByEventName(eventName: string, limit?: number) {
     await this.connectDb();
+    return await this.dbConnection.select<Comment>({
+      from: 'Comments',
+      where: { eventName: eventName },
+      limit: limit || null,
+    });
+  }
+
+  async registerComment(eventName: string, comment: any) {
+    await this.connectDb();
+    comment.eventName = eventName;
     await this.dbConnection.insert<Comment>({
       into: 'Comments',
       values: [comment],

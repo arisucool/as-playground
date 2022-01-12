@@ -1,17 +1,45 @@
 (function () {
   class HostScript {
     async init() {
-      this.commentViewerElem = document.body.querySelector(
-        '[class^="commentViewer_commentViewer__"]'
-      );
-      this.commentListElem = this.commentViewerElem.querySelector(
-        '[class^="commentViewer_commentList__"]'
-      );
-
+      // 変数を初期化
       this.comments = {};
       this.iframeElem = null;
       this.commentWatchingTimerId = null;
+      this.playerCurrentTimeWatchingTimerId = null;
+      this.playerCurrentTime = "";
 
+      // コメント一覧の要素を取得
+      this.commentViewerElem = document.body.querySelector(
+        '[class^="commentViewer_commentViewer__"]'
+      );
+      this.commentListElem = this.commentViewerElem
+        ? this.commentViewerElem.querySelector(
+            '[class^="commentViewer_commentList__"]'
+          )
+        : null;
+
+      // 動画再生領域の要素を取得 (動画にあわせてコメントを重ねて表示するために使用)
+      this.playerFrameElem = null;
+      for (const frameElem of document.body.querySelectorAll("iframe")) {
+        if (frameElem.src.match(/playervspf.channel.or.jp/)) {
+          this.playerFrameElem = frameElem;
+          break;
+        }
+      }
+      this.playerElem = document.body.querySelector(".vjs-tech");
+
+      // ページの種別を特定
+      if (this.commentListElem) {
+        this.pageType = "REALTIME_PLAY_PAGE"; // リアルタイム再生画面
+      } else if (this.playerFrameElem) {
+        this.pageType = "ARCHIVE_PLAY_PAGE"; // アーカイブ再生画面
+      } else if (this.playerElem) {
+        this.pageType = "PLAYER_FRAME_PAGE"; // プレーヤーフレーム内画面
+      } else {
+        this.pageType = "UNKNOWN"; // 不明な画面
+      }
+
+      // window.postMessage を介したメッセージを取得するためのイベントリスナを設定
       window.addEventListener(
         "message",
         (message) => {
@@ -30,8 +58,18 @@
         false
       );
 
+      // アプリケーションフレームを読み込み
       await this.loadIframe();
-      this.startCommentWatching();
+
+      // コメント一覧の新着コメントを監視
+      if (this.pageType == "REALTIME_PLAY_PAGE") {
+        this.startCommentWatching();
+      }
+
+      // 動画再生領域のタイムスタンプを監視
+      if (this.pageType == "PLAYER_FRAME_PAGE") {
+        this.startPlayerCurrentTimeWatching();
+      }
     }
 
     getOwnScriptUrl() {
@@ -62,7 +100,9 @@
         this.iframeElem.onload = () => {
           resolve();
         };
-        this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}`;
+        this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}&pageType=${
+          this.pageType
+        }`;
         this.iframeElem.style.bottom = "0px";
         this.iframeElem.style.right = "0px";
         this.iframeElem.style.position = "fixed";
@@ -99,12 +139,40 @@
       }, 500);
     }
 
+    startPlayerCurrentTimeWatching() {
+      this.stopPlayerCurrentTimeWatching();
+
+      this.playerCurrentTimeWatchingTimerId = window.setInterval(() => {
+        const currentTime = this.getPlayerCurrentTime();
+        if (currentTime == this.playerCurrentTime) {
+          return;
+        }
+
+        this.playerCurrentTime = currentTime;
+        this.iframeElem.contentWindow.postMessage(
+          {
+            type: "PLAYER_CURRENT_TIME_CHANGED",
+            currentTime: currentTime,
+          },
+          "*"
+        );
+      }, 500);
+    }
+
     stopCommentWatching() {
       if (!this.commentWatchingTimerId) {
         return;
       }
 
       window.clearInterval(this.commentWatchingTimerId);
+    }
+
+    stopPlayerCurrentTimeWatching() {
+      if (!this.playerCurrentTimeWatchingTimerId) {
+        return;
+      }
+
+      window.clearInterval(this.playerCurrentTimeWatchingTimerId);
     }
 
     getComments() {
@@ -155,6 +223,14 @@
       }
 
       return newComments.slice().reverse();
+    }
+
+    getPlayerCurrentTime() {
+      if (!this.playerElem) return;
+
+      const elem = document.querySelector(".vjs-current-time-display");
+
+      return elem.innerText.replace(/\s/g, "");
     }
   }
 

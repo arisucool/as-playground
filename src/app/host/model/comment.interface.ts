@@ -3,5 +3,6 @@ interface Comment {
   nickname: string;
   nicknameColor: string;
   comment: string;
+  eventName: string;
   receivedDate: Date;
 }
