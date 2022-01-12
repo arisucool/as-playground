@@ -11,12 +11,12 @@ export class HomeComponent implements OnInit {
   public bookmarklet: SafeUrl;
 
   public static BOOKMARKLET = `
-  javascript:(function (d,w,u,s) {
+  javascript:(function (d,u,s) {
       s=d.createElement('script');
       s.type='text/javascript';
       s.src=u+'?t='+Date.now();
       d.body.appendChild(s);
-  })(document, window, '%HOST_SCRIPT_URL%');
+  })(document, '%HOST_SCRIPT_URL%');
   `;
 
   constructor(private sanitizer: DomSanitizer) {}

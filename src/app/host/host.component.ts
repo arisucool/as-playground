@@ -26,6 +26,7 @@ export class HostComponent implements OnInit {
   public isCommentRecorderEnabled = false;
 
   // コメント再生用
+  public playerFramePageOpened = false;
   public playerCurrentTimeSeconds: number;
   public commentRecordedEvents: {
     [key: string]: {
@@ -235,6 +236,11 @@ export class HostComponent implements OnInit {
       null,
       { duration: 5000 }
     );
+  }
+
+  openPlayerFramePage() {
+    this.transferMessageToHostScript({ type: 'OPEN_PLAYER_FRAME_PAGE' });
+    this.playerFramePageOpened = true;
   }
 
   generateViewerUrl(hostPeerId: string) {

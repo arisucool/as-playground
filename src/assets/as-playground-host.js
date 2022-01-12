@@ -53,6 +53,8 @@
 
           if (message.data.type == "SET_IFRAME_VISIBILITY") {
             this.setIframeVisiblity(message.data.value);
+          } else if (message.data.type == "OPEN_PLAYER_FRAME_PAGE") {
+            this.openPlayerFramePage();
           }
         },
         false
@@ -120,6 +122,18 @@
       } else {
         this.iframeElem.style.display = "none";
       }
+    }
+
+    openPlayerFramePage() {
+      if (!this.playerFrameElem) {
+        window.alert("エラー: プレーヤーのURLを特定できません");
+        return;
+      }
+
+      const playerFrameUrl = this.playerFrameElem.src;
+      const openedWindow = window.open(playerFrameUrl);
+      openedWindow.blur();
+      window.focus();
     }
 
     startCommentWatching() {

@@ -1,6 +1,4 @@
-<div
-  *ngIf="pageType == 'REALTIME_PLAY_PAGE' || pageType == 'ARCHIVE_PLAY_PAGE'"
->
+<div *ngIf="pageType == 'REALTIME_PLAY_PAGE'">
   <div class="toolbar">
     <button
       (click)="setCommentRecorderEnabled(true)"
@@ -48,6 +46,31 @@
   </div>
 
   <div *ngIf="peerId && dataConnection">端末が接続されています</div>
+</div>
+
+<div *ngIf="pageType == 'ARCHIVE_PLAY_PAGE'">
+  <div *ngIf="!playerFramePageOpened">
+    <p>コメントの再生を行うには...</p>
+    <p>
+      以下のボタンから新しい画面を開き、<br />
+      そこでブックマークレットを読み込んでください。
+    </p>
+
+    <button mat-raised-button color="primary" (click)="openPlayerFramePage()">
+      プレーヤー単独画面を開く
+    </button>
+  </div>
+
+  <div *ngIf="playerFramePageOpened">
+    <p>
+      新しく開かれた画面で <br />
+      as-playground の ブックマークレットを<br />もう一度読み込んでください。
+    </p>
+
+    <button mat-raised-button (click)="playerFramePageOpened = false">
+      OK
+    </button>
+  </div>
 </div>
 
 <div *ngIf="pageType == 'PLAYER_FRAME_PAGE'">
