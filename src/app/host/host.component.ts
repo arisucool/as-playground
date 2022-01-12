@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import Peer, { DataConnection } from 'skyway-js';
 
 import { environment } from './../../environments/environment';
+import { CommentRecorderService } from './comment-recorder.service';
 
 @Component({
   selector: 'app-host',
@@ -17,15 +18,26 @@ export class HostComponent implements OnInit {
   public dataConnection: DataConnection;
 
   public latestComments: any[] = [];
+  public isCommentRecorderEnabled = false;
 
   constructor(
     private router: Router,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
+    private commentRecorder: CommentRecorderService
   ) {}
 
   ngOnInit(): void {
+    this.loadConfig();
     this.initPeer();
     this.startMessagingWithHostScript();
+  }
+
+  loadConfig(): void {
+    let isCommentRecorderEnabled = window.localStorage.getItem(
+      'host_isCommentRecorderEnabled'
+    );
+    this.isCommentRecorderEnabled =
+      isCommentRecorderEnabled && isCommentRecorderEnabled === 'true';
   }
 
   initPeer(): void {
@@ -68,7 +80,7 @@ export class HostComponent implements OnInit {
       });
 
       dataConnection.on('data', (data) => {
-        this.onReceiveMessageByViewer(data);
+        this.onReceiveMessageFromViewer(data);
       });
 
       dataConnection.once('close', () => {
@@ -93,8 +105,7 @@ export class HostComponent implements OnInit {
           message
         );
         if (message.data.type == 'COMMENTS_RECEIVED') {
-          this.latestComments = message.data.comments;
-          this.transferMessageToViewer(message.data);
+          this.onReceiveCommentsFromHostScript(message.data.comments);
         }
       },
       false
@@ -112,6 +123,32 @@ export class HostComponent implements OnInit {
     window.parent.postMessage(message, '*');
   }
 
+  async onReceiveCommentsFromHostScript(comments: Comment[]) {
+    console.log('onReceiveCommentsFromHostScript', comments);
+
+    this.latestComments = comments;
+
+    // コメントをビューアへ転送
+    this.transferMessageToViewer({
+      type: 'COMMENTS_RECEIVED',
+      comments: comments,
+    });
+
+    // コメントの記録
+    if (this.isCommentRecorderEnabled) {
+      let eventName =
+        window.parent && window.parent.document.title
+          ? window.parent.document.title.replace(
+              / \| ASOBISTAGE \| アソビストア/,
+              ''
+            )
+          : null;
+      for (let comment of comments) {
+        await this.commentRecorder.registerComment(eventName, comment);
+      }
+    }
+  }
+
   transferMessageToViewer(message: any) {
     if (!this.dataConnection) {
       console.log('transferMessageToViewer', 'Canceled');
@@ -121,7 +158,7 @@ export class HostComponent implements OnInit {
     this.dataConnection.send(encodeURIComponent(JSON.stringify(message)));
   }
 
-  onReceiveMessageByViewer(message: string) {}
+  onReceiveMessageFromViewer(message: string) {}
 
   generateViewerUrl(hostPeerId: string) {
     if (
@@ -133,5 +170,13 @@ export class HostComponent implements OnInit {
       }viewer/${hostPeerId}`;
     }
     return `${window.location.protocol}//${window.location.host}/viewer/${hostPeerId}`;
+  }
+
+  setCommentRecorderEnabled(enable: boolean) {
+    this.isCommentRecorderEnabled = enable;
+    window.localStorage.setItem(
+      'host_isCommentRecorderEnabled',
+      enable ? 'true' : 'false'
+    );
   }
 }

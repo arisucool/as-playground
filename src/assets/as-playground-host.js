@@ -1,6 +1,6 @@
 (function () {
   class HostScript {
-    init() {
+    async init() {
       this.commentViewerElem = document.body.querySelector(
         '[class^="commentViewer_commentViewer__"]'
       );
@@ -30,7 +30,7 @@
         false
       );
 
-      this.loadIframe();
+      await this.loadIframe();
       this.startCommentWatching();
     }
 
@@ -54,18 +54,24 @@
       return scriptUrl.replace(/\/assets\/as-playground-host\.js\?t=\d+/g, "");
     }
 
-    loadIframe() {
-      const hostUrl = this.getOwnBaseUrl();
+    async loadIframe() {
+      return new Promise((resolve, reject) => {
+        const hostUrl = this.getOwnBaseUrl();
 
-      this.iframeElem = document.createElement("iframe");
-      this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}`;
-      this.iframeElem.style.bottom = "0px";
-      this.iframeElem.style.right = "0px";
-      this.iframeElem.style.position = "fixed";
-      this.iframeElem.style.width = "480px";
-      this.iframeElem.style.height = "320px";
-      this.iframeElem.style.zIndex = "10000";
-      document.body.appendChild(this.iframeElem);
+        this.iframeElem = document.createElement("iframe");
+        this.iframeElem.onload = () => {
+          resolve();
+        };
+        this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}`;
+        this.iframeElem.style.bottom = "0px";
+        this.iframeElem.style.right = "0px";
+        this.iframeElem.style.position = "fixed";
+        this.iframeElem.style.width = "480px";
+        this.iframeElem.style.height = "320px";
+        this.iframeElem.style.zIndex = "10000";
+
+        document.body.appendChild(this.iframeElem);
+      });
     }
 
     setIframeVisiblity(value) {

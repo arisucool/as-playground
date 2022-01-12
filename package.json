@@ -48,6 +48,7 @@
     "@angular/router": "~11.0.5",
     "@uriopass/nosleep.js": "^0.12.1",
     "angularx-qrcode": "^11.0.0",
+    "jsstore": "^4.3.7",
     "rxjs": "~6.6.0",
     "skyway-js": "^4.4.3",
     "tslib": "^2.0.0",

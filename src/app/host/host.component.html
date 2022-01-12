@@ -1,7 +1,30 @@
+<div class="toolbar">
+  <button
+    (click)="setCommentRecorderEnabled(true)"
+    *ngIf="!isCommentRecorderEnabled"
+    mat-icon-button
+    aria-label="コメントを記録する"
+    matTooltip="コメントを記録する (記録しておくと、アーカイブ再生時にコメントを再現できます)"
+  >
+    <mat-icon>comments_disabled</mat-icon>
+  </button>
+  <button
+    (click)="setCommentRecorderEnabled(false)"
+    *ngIf="isCommentRecorderEnabled"
+    mat-icon-button
+    aria-label="コメントの記録を停止する"
+    matTooltip="コメントの記録を停止する"
+  >
+    <mat-icon>comment</mat-icon>
+  </button>
+</div>
+
 <div *ngIf="!peerId">しばらくお待ちください...</div>
 
 <div *ngIf="peerId && !dataConnection">
-  <p>スマートフォンなどで読み取ってください:</p>
+  <p>
+    コメントをスマートフォンなどで閲覧するには<br />QRコードを読み取ってください:
+  </p>
   <p>
     <qrcode
       [qrdata]="viewerUrl"
