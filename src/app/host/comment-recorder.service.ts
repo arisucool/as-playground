@@ -28,12 +28,34 @@ export class CommentRecorderService {
     });
   }
 
-  async getCommentsByEventName(eventName: string, limit?: number) {
+  async getCommentsByEventName(
+    eventName: string,
+    limit?: number
+  ): Promise<Comment[]> {
     await this.connectDb();
     return await this.dbConnection.select<Comment>({
       from: 'Comments',
       where: { eventName: eventName },
       limit: limit || null,
+    });
+  }
+
+  async getCommentsByEventNameAndReceivedDate(
+    eventName: string,
+    receivedDate: number
+  ): Promise<Comment[]> {
+    await this.connectDb();
+    return await this.dbConnection.select<Comment>({
+      from: 'Comments',
+      where: {
+        eventName: eventName,
+        receivedDate: {
+          '-': {
+            low: new Date(receivedDate),
+            high: new Date(receivedDate + 1000),
+          },
+        },
+      },
     });
   }
 

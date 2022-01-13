@@ -80,12 +80,20 @@
       !selectedRecordedEventName && commentBeginningOffsetTimeSeconds == -1
     "
   >
-    <p *ngIf="objectKeys(commentRecordedEvents).length == 0">
+    <p
+      *ngIf="
+        !commentRecordedEvents || objectKeys(commentRecordedEvents).length == 0
+      "
+    >
       記録されたコメントがありません。<br /><br />
       ※
       コメントを再生するには、リアルタイム視聴中に「コメントの記録」を実行しておく必要があります。
     </p>
-    <p *ngIf="1 <= objectKeys(commentRecordedEvents).length">
+    <p
+      *ngIf="
+        commentRecordedEvents && 1 <= objectKeys(commentRecordedEvents).length
+      "
+    >
       コメントを再生するには、映像を一時停止した状態で<br />以下からイベントを選んでください<br /><br />
       <mat-form-field appearance="fill" floatLabel="always">
         <mat-label>コメントを再生するイベント</mat-label>
@@ -109,8 +117,7 @@
   <div
     *ngIf="selectedRecordedEventName && commentBeginningOffsetTimeSeconds == -1"
   >
-    以下のコメントの場面まで、映像をシークしてください。<br />
-    その後、[シークしました] を押してください。
+    以下のコメントの場面まで、映像をシークしてください。
 
     <mat-list dense>
       <mat-list-item
@@ -119,13 +126,21 @@
             .beginningComments
         "
       >
-        {{ comment }}
+        {{ comment.comment }}
       </mat-list-item>
     </mat-list>
 
-    <p>
-      <button mat-raised-button (click)="selectedRecordedEventName = null">
+    <p style="margin: 0.5rem auto 0px auto; line-height: 0">
+      <button mat-raised-button (click)="cancelCommentPlayback()">
         キャンセル
+      </button>
+      &nbsp;
+      <button
+        mat-raised-button
+        (click)="skipBeginningComment()"
+        matTooltip="これらのコメントの場面が映像内に見当たらなかった場合は、このボタンを押してください"
+      >
+        場面が見つかりません
       </button>
       &nbsp;
       <button
@@ -135,6 +150,7 @@
       >
         シークしました
       </button>
+      &nbsp;
     </p>
   </div>
   <!---->
@@ -163,14 +179,7 @@
 
       &nbsp;
 
-      <button
-        mat-raised-button
-        color="warn"
-        (click)="
-          selectedRecordedEventName = null;
-          commentBeginningOffsetTimeSeconds = -1
-        "
-      >
+      <button mat-raised-button color="warn" (click)="cancelCommentPlayback()">
         コメント再生を終了
       </button>
     </p>

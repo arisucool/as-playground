@@ -31,7 +31,9 @@ export class HostComponent implements OnInit {
   public commentRecordedEvents: {
     [key: string]: {
       eventName: string;
-      beginningComments: string[];
+      allBeginningComments: Comment[];
+      beginningComments: Comment[];
+      beginningCommentIndex: number;
     };
   };
   public selectedRecordedEventName: string;
@@ -137,10 +139,12 @@ export class HostComponent implements OnInit {
     this.commentRecordedEvents = {};
     for (const eventName of eventNames) {
       const beginningComments =
-        await this.commentRecorder.getCommentsByEventName(eventName, 3);
+        await this.commentRecorder.getCommentsByEventName(eventName, 100);
       this.commentRecordedEvents[eventName] = {
         eventName: eventName,
-        beginningComments: beginningComments.map((item: any) => item.comment),
+        allBeginningComments: beginningComments,
+        beginningComments: beginningComments.slice(0, 4),
+        beginningCommentIndex: 0,
       };
     }
   }
@@ -210,6 +214,20 @@ export class HostComponent implements OnInit {
   async onReceivePlayerCurrentTimeFromHostScript(currentTime: string) {
     console.log('onReceivePlayerCurrentTimeFromHostScript', currentTime);
     this.playerCurrentTimeSeconds = this.timeStringToSeconds(currentTime);
+
+    // コメント再生が有効ならば、オーバレイコメントを表示
+    if (
+      this.selectedRecordedEventName &&
+      this.commentBeginningOffsetTimeSeconds != -1
+    ) {
+      const comments = await this.getCommentsOfCurrentTime();
+      if (0 < comments.length) {
+        this.transferMessageToHostScript({
+          type: 'SHOW_OVERLAY_COMMENTS',
+          comments: comments,
+        });
+      }
+    }
   }
 
   transferMessageToViewer(message: any) {
@@ -225,6 +243,49 @@ export class HostComponent implements OnInit {
 
   onSelectedRecordedEventName(event) {
     this.selectedRecordedEventName = event.value;
+  }
+
+  cancelCommentPlayback() {
+    const eventName = this.selectedRecordedEventName;
+    this.commentRecordedEvents[eventName].beginningCommentIndex = 0;
+    this.commentRecordedEvents[eventName].beginningComments =
+      this.commentRecordedEvents[eventName].allBeginningComments.slice(0, 4);
+    this.selectedRecordedEventName = null;
+    this.commentBeginningOffsetTimeSeconds = -1;
+  }
+
+  skipBeginningComment() {
+    const eventName = this.selectedRecordedEventName;
+    this.commentRecordedEvents[eventName].beginningCommentIndex += 4;
+
+    this.commentRecordedEvents[eventName].beginningComments =
+      this.commentRecordedEvents[eventName].allBeginningComments.slice(
+        this.commentRecordedEvents[eventName].beginningCommentIndex,
+        this.commentRecordedEvents[eventName].beginningCommentIndex + 4
+      );
+  }
+
+  async getCommentsOfCurrentTime(): Promise<Comment[]> {
+    if (!this.selectedRecordedEventName) return [];
+
+    const eventName = this.selectedRecordedEventName;
+    const beginningComments =
+      this.commentRecordedEvents[eventName].beginningComments;
+    if (beginningComments.length <= 0) return [];
+
+    const targetCommentDate =
+      beginningComments[0].receivedDate.getTime() -
+      this.commentBeginningOffsetTimeSeconds * 1000 +
+      this.playerCurrentTimeSeconds * 1000;
+    console.log('targetCommentDate', targetCommentDate);
+
+    const targetComments =
+      await this.commentRecorder.getCommentsByEventNameAndReceivedDate(
+        this.selectedRecordedEventName,
+        targetCommentDate
+      );
+
+    return targetComments;
   }
 
   setCommentBeginningOffsetTime() {

@@ -55,6 +55,8 @@
             this.setIframeVisiblity(message.data.value);
           } else if (message.data.type == "OPEN_PLAYER_FRAME_PAGE") {
             this.openPlayerFramePage();
+          } else if (message.data.type == "SHOW_OVERLAY_COMMENTS") {
+            this.showOverlayComments(message.data.comments);
           }
         },
         false
@@ -134,6 +136,10 @@
       const openedWindow = window.open(playerFrameUrl);
       openedWindow.blur();
       window.focus();
+    }
+
+    showOverlayComments(comments) {
+      console.log("showOverlayComments", comments);
     }
 
     startCommentWatching() {
