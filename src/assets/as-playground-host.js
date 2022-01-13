@@ -65,14 +65,33 @@
       // アプリケーションフレームを読み込み
       await this.loadIframe();
 
-      // コメント一覧の新着コメントを監視
+      // リアルタイム再生画面ならば
       if (this.pageType == "REALTIME_PLAY_PAGE") {
+        // コメント一覧の新着コメントを監視
         this.startCommentWatching();
       }
 
-      // 動画再生領域のタイムスタンプを監視
+      // プレーヤーフレーム内画面ならば
       if (this.pageType == "PLAYER_FRAME_PAGE") {
+        // 動画再生領域のタイムスタンプを監視
         this.startPlayerCurrentTimeWatching();
+
+        // NicoJS (コメント表示ライブラリ) を読み込み
+        await this.loadNicoJS();
+        this.nicoJs = new nicoJS({
+          app: document.getElementById("embed"),
+          width: window.innerWidth,
+          height: window.innerHeight,
+          font_size: 30,
+          color: "#ffffff",
+          speed: 4,
+        });
+        this.nicoJs.listen();
+
+        // ウィンドウのリサイズを監視 (コメント表示領域をリサイズするため)
+        window.addEventListener("resize", () => {
+          this.nicoJs.resize(window.innerWidth, window.innerHeight);
+        });
       }
     }
 
@@ -118,6 +137,18 @@
       });
     }
 
+    async loadNicoJS() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.onload = () => {
+          resolve();
+        };
+        script.type = "text/javascript";
+        script.src = "https://mugiply.github.io/nicoJS/lib/nico.js";
+        document.body.appendChild(script);
+      });
+    }
+
     setIframeVisiblity(value) {
       if (value) {
         this.iframeElem.style.display = "block";
@@ -139,7 +170,9 @@
     }
 
     showOverlayComments(comments) {
-      console.log("showOverlayComments", comments);
+      for (const comment of comments) {
+        this.nicoJs.send({ text: comment.comment });
+      }
     }
 
     startCommentWatching() {
