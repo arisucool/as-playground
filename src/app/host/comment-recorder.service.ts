@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as JsStore from 'jsstore';
 import { DataStoreService } from './data-store/data-store.service';
+import { Comment } from './model/comment.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -52,7 +53,7 @@ export class CommentRecorderService {
         receivedDate: {
           '-': {
             low: new Date(receivedDate),
-            high: new Date(receivedDate + 1000),
+            high: new Date(receivedDate + 999),
           },
         },
       },

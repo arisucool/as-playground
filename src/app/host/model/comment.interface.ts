@@ -1,4 +1,4 @@
-interface Comment {
+export interface Comment {
   id: string;
   nickname: string;
   nicknameColor: string;

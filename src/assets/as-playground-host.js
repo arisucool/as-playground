@@ -134,6 +134,24 @@
         this.iframeElem.style.zIndex = "10000";
 
         document.body.appendChild(this.iframeElem);
+
+        this.toggleBtnElem = document.createElement("div");
+        this.toggleBtnElem.addEventListener("click", () => {
+          this.toggleIframeVisiblity();
+        });
+        this.toggleBtnElem.innerHTML = "&nbsp;";
+        this.toggleBtnElem.style.background = "rgba(150, 150, 150, 0.4)";
+        this.toggleBtnElem.style.borderRadius = "20px";
+        this.toggleBtnElem.style.cursor = "pointer";
+        this.toggleBtnElem.style.textAlign = "center";
+        this.toggleBtnElem.style.bottom = "320px";
+        this.toggleBtnElem.style.right = "190px";
+        this.toggleBtnElem.style.position = "fixed";
+        this.toggleBtnElem.style.width = "100px";
+        this.toggleBtnElem.style.height = "12px";
+        this.toggleBtnElem.style.zIndex = "9999";
+
+        document.body.appendChild(this.toggleBtnElem);
       });
     }
 
@@ -149,11 +167,21 @@
       });
     }
 
+    toggleIframeVisiblity() {
+      if (this.iframeElem.style.display == "none") {
+        this.setIframeVisiblity(true);
+      } else {
+        this.setIframeVisiblity(false);
+      }
+    }
+
     setIframeVisiblity(value) {
       if (value) {
         this.iframeElem.style.display = "block";
+        this.toggleBtnElem.style.bottom = "320px";
       } else {
         this.iframeElem.style.display = "none";
+        this.toggleBtnElem.style.bottom = "-5px";
       }
     }
 
@@ -170,6 +198,7 @@
     }
 
     showOverlayComments(comments) {
+      console.log("showOverlayComments", comments);
       for (const comment of comments) {
         this.nicoJs.send({ text: comment.comment });
       }

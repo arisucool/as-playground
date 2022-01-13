@@ -1,0 +1,33 @@
+<h2 mat-dialog-title>コメントのインポート/エクスポート</h2>
+
+<mat-dialog-content class="mat-typography">
+  <h3>コメントのインポート</h3>
+  <p>
+    <input
+      name="importFile"
+      style="display: none"
+      #importFileInput
+      (change)="onImportFileChanged()"
+      type="file"
+      accept=".json"
+    />
+    <button mat-raised-button color="primary" (click)="openFileChooser()">
+      <mat-icon>attach_file</mat-icon>
+      JSON ファイルを選択
+    </button>
+  </p>
+  <p style="font-size: 0.8rem; color: #b82727" *ngIf="importFileError">
+    {{ importFileError }}
+  </p>
+  <p style="font-size: 0.8rem" *ngIf="numOfImportedComments != -1">
+    <span style="color: #54a128">インポート完了しました</span> &nbsp;&nbsp;
+    {{ importedEventName }} ({{ numOfImportedComments }}件)
+  </p>
+
+  <h3>コメントのエクスポート</h3>
+  <p>未実装</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>閉じる</button>
+</mat-dialog-actions>

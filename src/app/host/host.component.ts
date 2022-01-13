@@ -5,7 +5,10 @@ import { ActivatedRoute } from '@angular/router';
 import Peer, { DataConnection } from 'skyway-js';
 
 import { environment } from './../../environments/environment';
+import { Comment } from './model/comment.interface';
 import { CommentRecorderService } from './comment-recorder.service';
+import { MatDialog } from '@angular/material/dialog';
+import { CommentBackupDialogComponent } from './comment-backup/comment-backup-dialog.component';
 
 @Component({
   selector: 'app-host',
@@ -46,7 +49,8 @@ export class HostComponent implements OnInit {
     private route: ActivatedRoute,
     private changeDetectorRef: ChangeDetectorRef,
     private commentRecorder: CommentRecorderService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -277,7 +281,6 @@ export class HostComponent implements OnInit {
       beginningComments[0].receivedDate.getTime() -
       this.commentBeginningOffsetTimeSeconds * 1000 +
       this.playerCurrentTimeSeconds * 1000;
-    console.log('targetCommentDate', targetCommentDate);
 
     const targetComments =
       await this.commentRecorder.getCommentsByEventNameAndReceivedDate(
@@ -305,6 +308,13 @@ export class HostComponent implements OnInit {
   openPlayerFramePage() {
     this.transferMessageToHostScript({ type: 'OPEN_PLAYER_FRAME_PAGE' });
     this.playerFramePageOpened = true;
+  }
+
+  openCommentBackupDialog() {
+    const dialogRef = this.dialog.open(CommentBackupDialogComponent);
+    dialogRef.afterClosed().subscribe(async (result) => {
+      await this.loadCommentRecordedEvents();
+    });
   }
 
   generateViewerUrl(hostPeerId: string) {

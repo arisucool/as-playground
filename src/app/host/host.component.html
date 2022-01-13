@@ -74,6 +74,17 @@
 </div>
 
 <div *ngIf="pageType == 'PLAYER_FRAME_PAGE'">
+  <div class="toolbar">
+    <button
+      (click)="openCommentBackupDialog()"
+      mat-icon-button
+      aria-label="コメントのインポート/エクスポート"
+      matTooltip="コメントのインポート/エクスポート"
+    >
+      <mat-icon>import_export</mat-icon>
+    </button>
+  </div>
+
   <!-- イベント未選択時 -->
   <div
     *ngIf="
