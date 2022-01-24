@@ -1,9 +1,14 @@
 import { ThrowStmt } from '@angular/compiler';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute } from '@angular/router';
 import Peer, { DataConnection } from 'skyway-js';
 
 import { environment } from './../../environments/environment';
+import { Comment } from './model/comment.interface';
+import { CommentRecorderService } from './comment-recorder.service';
+import { MatDialog } from '@angular/material/dialog';
+import { CommentBackupDialogComponent } from './comment-backup/comment-backup-dialog.component';
 
 @Component({
   selector: 'app-host',
@@ -16,16 +21,66 @@ export class HostComponent implements OnInit {
   public viewerUrl: string;
   public dataConnection: DataConnection;
 
+  // ページの種別
+  public pageType: string;
+
+  // コメント記録用
   public latestComments: any[] = [];
+  public isCommentRecorderEnabled = false;
+
+  // コメント再生用
+  public playerFramePageOpened = false;
+  public playerCurrentTimeSeconds: number;
+  public commentRecordedEvents: {
+    [key: string]: {
+      eventName: string;
+      allBeginningComments: Comment[];
+      beginningComments: Comment[];
+      beginningCommentIndex: number;
+    };
+  };
+  public selectedRecordedEventName: string;
+  public commentBeginningOffsetTimeSeconds: number = -1;
+
+  // 汎用
+  public objectKeys = Object.keys;
 
   constructor(
-    private router: Router,
-    private changeDetectorRef: ChangeDetectorRef
+    private route: ActivatedRoute,
+    private changeDetectorRef: ChangeDetectorRef,
+    private commentRecorder: CommentRecorderService,
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
-    this.initPeer();
+    this.loadConfig();
+
+    switch (this.route.snapshot.queryParams.pageType) {
+      case 'REALTIME_PLAY_PAGE':
+      case 'ARCHIVE_PLAY_PAGE':
+      case 'PLAYER_FRAME_PAGE':
+        this.pageType = this.route.snapshot.queryParams.pageType;
+        break;
+      default:
+        this.pageType = 'UNKNOWN';
+    }
+
+    if (this.pageType == 'REALTIME_PLAY_PAGE') {
+      this.initPeer();
+    } else if (this.pageType == 'PLAYER_FRAME_PAGE') {
+      this.loadCommentRecordedEvents();
+    }
+
     this.startMessagingWithHostScript();
+  }
+
+  loadConfig(): void {
+    let isCommentRecorderEnabled = window.localStorage.getItem(
+      'host_isCommentRecorderEnabled'
+    );
+    this.isCommentRecorderEnabled =
+      isCommentRecorderEnabled && isCommentRecorderEnabled === 'true';
   }
 
   initPeer(): void {
@@ -68,7 +123,7 @@ export class HostComponent implements OnInit {
       });
 
       dataConnection.on('data', (data) => {
-        this.onReceiveMessageByViewer(data);
+        this.onReceiveMessageFromViewer(data);
       });
 
       dataConnection.once('close', () => {
@@ -83,6 +138,21 @@ export class HostComponent implements OnInit {
     });
   }
 
+  async loadCommentRecordedEvents() {
+    const eventNames = await this.commentRecorder.getEventNames();
+    this.commentRecordedEvents = {};
+    for (const eventName of eventNames) {
+      const beginningComments =
+        await this.commentRecorder.getCommentsByEventName(eventName, 100);
+      this.commentRecordedEvents[eventName] = {
+        eventName: eventName,
+        allBeginningComments: beginningComments,
+        beginningComments: beginningComments.slice(0, 4),
+        beginningCommentIndex: 0,
+      };
+    }
+  }
+
   startMessagingWithHostScript() {
     window.addEventListener(
       'message',
@@ -92,9 +162,16 @@ export class HostComponent implements OnInit {
           'message received...',
           message
         );
-        if (message.data.type == 'COMMENTS_RECEIVED') {
-          this.latestComments = message.data.comments;
-          this.transferMessageToViewer(message.data);
+
+        switch (message.data.type) {
+          case 'COMMENTS_RECEIVED':
+            this.onReceiveCommentsFromHostScript(message.data.comments);
+            break;
+          case 'PLAYER_CURRENT_TIME_CHANGED':
+            this.onReceivePlayerCurrentTimeFromHostScript(
+              message.data.currentTime
+            );
+            break;
         }
       },
       false
@@ -112,6 +189,51 @@ export class HostComponent implements OnInit {
     window.parent.postMessage(message, '*');
   }
 
+  async onReceiveCommentsFromHostScript(comments: Comment[]) {
+    console.log('onReceiveCommentsFromHostScript', comments);
+
+    this.latestComments = comments;
+
+    // コメントをビューアへ転送
+    this.transferMessageToViewer({
+      type: 'COMMENTS_RECEIVED',
+      comments: comments,
+    });
+
+    // コメントの記録
+    if (this.isCommentRecorderEnabled) {
+      let eventName =
+        window.parent && window.parent.document.title
+          ? window.parent.document.title.replace(
+              / \| ASOBISTAGE \| アソビストア/,
+              ''
+            )
+          : '不明';
+      for (let comment of comments) {
+        await this.commentRecorder.registerComment(eventName, comment);
+      }
+    }
+  }
+
+  async onReceivePlayerCurrentTimeFromHostScript(currentTime: string) {
+    console.log('onReceivePlayerCurrentTimeFromHostScript', currentTime);
+    this.playerCurrentTimeSeconds = this.timeStringToSeconds(currentTime);
+
+    // コメント再生が有効ならば、オーバレイコメントを表示
+    if (
+      this.selectedRecordedEventName &&
+      this.commentBeginningOffsetTimeSeconds != -1
+    ) {
+      const comments = await this.getCommentsOfCurrentTime();
+      if (0 < comments.length) {
+        this.transferMessageToHostScript({
+          type: 'SHOW_OVERLAY_COMMENTS',
+          comments: comments,
+        });
+      }
+    }
+  }
+
   transferMessageToViewer(message: any) {
     if (!this.dataConnection) {
       console.log('transferMessageToViewer', 'Canceled');
@@ -121,7 +243,79 @@ export class HostComponent implements OnInit {
     this.dataConnection.send(encodeURIComponent(JSON.stringify(message)));
   }
 
-  onReceiveMessageByViewer(message: string) {}
+  onReceiveMessageFromViewer(message: string) {}
+
+  onSelectedRecordedEventName(event) {
+    this.selectedRecordedEventName = event.value;
+  }
+
+  cancelCommentPlayback() {
+    const eventName = this.selectedRecordedEventName;
+    this.commentRecordedEvents[eventName].beginningCommentIndex = 0;
+    this.commentRecordedEvents[eventName].beginningComments =
+      this.commentRecordedEvents[eventName].allBeginningComments.slice(0, 4);
+    this.selectedRecordedEventName = null;
+    this.commentBeginningOffsetTimeSeconds = -1;
+  }
+
+  skipBeginningComment() {
+    const eventName = this.selectedRecordedEventName;
+    this.commentRecordedEvents[eventName].beginningCommentIndex += 4;
+
+    this.commentRecordedEvents[eventName].beginningComments =
+      this.commentRecordedEvents[eventName].allBeginningComments.slice(
+        this.commentRecordedEvents[eventName].beginningCommentIndex,
+        this.commentRecordedEvents[eventName].beginningCommentIndex + 4
+      );
+  }
+
+  async getCommentsOfCurrentTime(): Promise<Comment[]> {
+    if (!this.selectedRecordedEventName) return [];
+
+    const eventName = this.selectedRecordedEventName;
+    const beginningComments =
+      this.commentRecordedEvents[eventName].beginningComments;
+    if (beginningComments.length <= 0) return [];
+
+    const targetCommentDate =
+      beginningComments[0].receivedDate.getTime() -
+      this.commentBeginningOffsetTimeSeconds * 1000 +
+      this.playerCurrentTimeSeconds * 1000;
+
+    const targetComments =
+      await this.commentRecorder.getCommentsByEventNameAndReceivedDate(
+        this.selectedRecordedEventName,
+        targetCommentDate
+      );
+
+    return targetComments;
+  }
+
+  setCommentBeginningOffsetTime() {
+    if (!this.playerCurrentTimeSeconds) {
+      this.commentBeginningOffsetTimeSeconds = 0;
+    } else {
+      this.commentBeginningOffsetTimeSeconds = this.playerCurrentTimeSeconds;
+    }
+
+    this.snackBar.open(
+      `コメント再生の準備が整いました。映像の再生ボタンを押してください。`,
+      null,
+      { duration: 5000 }
+    );
+  }
+
+  openPlayerFramePage() {
+    this.transferMessageToHostScript({ type: 'OPEN_PLAYER_FRAME_PAGE' });
+    this.playerFramePageOpened = true;
+  }
+
+  openCommentBackupDialog() {
+    const dialogRef = this.dialog.open(CommentBackupDialogComponent);
+    dialogRef.afterClosed().subscribe(async (result) => {
+      await this.loadCommentRecordedEvents();
+    });
+  }
 
   generateViewerUrl(hostPeerId: string) {
     if (
@@ -133,5 +327,30 @@ export class HostComponent implements OnInit {
       }viewer/${hostPeerId}`;
     }
     return `${window.location.protocol}//${window.location.host}/viewer/${hostPeerId}`;
+  }
+
+  setCommentRecorderEnabled(enable: boolean) {
+    this.isCommentRecorderEnabled = enable;
+    window.localStorage.setItem(
+      'host_isCommentRecorderEnabled',
+      enable ? 'true' : 'false'
+    );
+  }
+
+  protected timeStringToSeconds(timeString: string): number {
+    let arr = timeString.split(':');
+    if (arr.length == 3) {
+      return (
+        parseInt(arr[0], 10) * 60 * 60 +
+        parseInt(arr[1], 10) * 60 +
+        parseInt(arr[2], 10)
+      );
+    } else if (arr.length == 2) {
+      return parseInt(arr[0], 10) * 60 + parseInt(arr[1], 10);
+    } else if (arr.length == 1) {
+      return parseInt(arr[0], 10);
+    }
+
+    return null;
   }
 }

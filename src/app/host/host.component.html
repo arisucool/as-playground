@@ -1,24 +1,199 @@
-<div *ngIf="!peerId">しばらくお待ちください...</div>
+<div *ngIf="pageType == 'REALTIME_PLAY_PAGE'">
+  <div class="toolbar">
+    <button
+      (click)="setCommentRecorderEnabled(true)"
+      *ngIf="!isCommentRecorderEnabled"
+      mat-icon-button
+      aria-label="コメントを記録する"
+      matTooltip="コメントを記録する (記録しておくと、アーカイブ再生時にコメントを再現できます)"
+    >
+      <mat-icon>comments_disabled</mat-icon>
+    </button>
+    <button
+      (click)="setCommentRecorderEnabled(false)"
+      *ngIf="isCommentRecorderEnabled"
+      mat-icon-button
+      aria-label="コメントの記録を停止する"
+      matTooltip="コメントの記録を停止する"
+    >
+      <mat-icon>comment</mat-icon>
+    </button>
+  </div>
 
-<div *ngIf="peerId && !dataConnection">
-  <p>スマートフォンなどで読み取ってください:</p>
-  <p>
-    <qrcode
-      [qrdata]="viewerUrl"
-      [width]="128"
-      [errorCorrectionLevel]="'M'"
-    ></qrcode>
-    <span style="font-size: 0.7rem">
-      <a
-        [href]="viewerUrl"
-        style="color: #444; text-decoration: none"
-        target="_blank"
-        rel="noopener"
-      >
-        {{ viewerUrl }}
-      </a>
-    </span>
-  </p>
+  <div *ngIf="!peerId">しばらくお待ちください...</div>
+
+  <div *ngIf="peerId && !dataConnection">
+    <p>
+      コメントをスマートフォンなどで閲覧するには<br />QRコードを読み取ってください:
+    </p>
+    <p>
+      <qrcode
+        [qrdata]="viewerUrl"
+        [width]="128"
+        [errorCorrectionLevel]="'M'"
+      ></qrcode>
+      <span style="font-size: 0.7rem">
+        <a
+          [href]="viewerUrl"
+          style="color: #444; text-decoration: none"
+          target="_blank"
+          rel="noopener"
+        >
+          {{ viewerUrl }}
+        </a>
+      </span>
+    </p>
+  </div>
+
+  <div *ngIf="peerId && dataConnection">端末が接続されています</div>
 </div>
 
-<div *ngIf="peerId && dataConnection">端末が接続されています</div>
+<div *ngIf="pageType == 'ARCHIVE_PLAY_PAGE'">
+  <div *ngIf="!playerFramePageOpened">
+    <p>コメントの再生を行うには...</p>
+    <p>
+      以下のボタンから新しい画面を開き、<br />
+      そこでブックマークレットを読み込んでください。
+    </p>
+
+    <button mat-raised-button color="primary" (click)="openPlayerFramePage()">
+      プレーヤー単独画面を開く
+    </button>
+  </div>
+
+  <div *ngIf="playerFramePageOpened">
+    <p>
+      新しく開かれた画面で <br />
+      as-playground の ブックマークレットを<br />もう一度読み込んでください。
+    </p>
+
+    <button mat-raised-button (click)="playerFramePageOpened = false">
+      OK
+    </button>
+  </div>
+</div>
+
+<div *ngIf="pageType == 'PLAYER_FRAME_PAGE'">
+  <div class="toolbar">
+    <button
+      (click)="openCommentBackupDialog()"
+      mat-icon-button
+      aria-label="コメントのインポート/エクスポート"
+      matTooltip="コメントのインポート/エクスポート"
+    >
+      <mat-icon>import_export</mat-icon>
+    </button>
+  </div>
+
+  <!-- イベント未選択時 -->
+  <div
+    *ngIf="
+      !selectedRecordedEventName && commentBeginningOffsetTimeSeconds == -1
+    "
+  >
+    <p
+      *ngIf="
+        !commentRecordedEvents || objectKeys(commentRecordedEvents).length == 0
+      "
+    >
+      記録されたコメントがありません。<br /><br />
+      ※
+      コメントを再生するには、リアルタイム視聴中に「コメントの記録」を実行しておく必要があります。
+    </p>
+    <p
+      *ngIf="
+        commentRecordedEvents && 1 <= objectKeys(commentRecordedEvents).length
+      "
+    >
+      コメントを再生するには、映像を一時停止した状態で<br />以下からイベントを選んでください<br /><br />
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>コメントを再生するイベント</mat-label>
+        <mat-select
+          name="selectedEventName"
+          (selectionChange)="onSelectedRecordedEventName($event)"
+        >
+          <mat-option
+            *ngFor="let item of commentRecordedEvents | keyvalue"
+            [value]="item.key"
+            >{{ item.key }}</mat-option
+          >
+        </mat-select>
+      </mat-form-field>
+      <br />
+    </p>
+  </div>
+  <!---->
+
+  <!-- イベント選択時 -->
+  <div
+    *ngIf="selectedRecordedEventName && commentBeginningOffsetTimeSeconds == -1"
+  >
+    以下のコメントの場面まで、映像をシークしてください。
+
+    <mat-list dense>
+      <mat-list-item
+        *ngFor="
+          let comment of commentRecordedEvents[selectedRecordedEventName]
+            .beginningComments
+        "
+      >
+        {{ comment.comment }}
+      </mat-list-item>
+    </mat-list>
+
+    <p style="margin: 0.5rem auto 0px auto; line-height: 0">
+      <button mat-raised-button (click)="cancelCommentPlayback()">
+        キャンセル
+      </button>
+      &nbsp;
+      <button
+        mat-raised-button
+        (click)="skipBeginningComment()"
+        matTooltip="これらのコメントの場面が映像内に見当たらなかった場合は、このボタンを押してください"
+      >
+        場面が見つかりません
+      </button>
+      &nbsp;
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="setCommentBeginningOffsetTime()"
+      >
+        シークしました
+      </button>
+      &nbsp;
+    </p>
+  </div>
+  <!---->
+
+  <!-- コメント再生中 -->
+  <div
+    *ngIf="selectedRecordedEventName && commentBeginningOffsetTimeSeconds != -1"
+  >
+    <p>
+      コメントを再生中です<br />
+      <span style="font-size: 0.8rem; color: #666"
+        >コメントの開始オフセット:
+        {{ commentBeginningOffsetTimeSeconds }} 秒<br />
+        映像の再生位置: {{ playerCurrentTimeSeconds }} 秒</span
+      >
+    </p>
+    <p>&nbsp;</p>
+
+    <p>
+      <button
+        mat-raised-button
+        (click)="commentBeginningOffsetTimeSeconds = -1"
+      >
+        開始オフセットを再調整
+      </button>
+
+      &nbsp;
+
+      <button mat-raised-button color="warn" (click)="cancelCommentPlayback()">
+        コメント再生を終了
+      </button>
+    </p>
+  </div>
+  <!---->
+</div>

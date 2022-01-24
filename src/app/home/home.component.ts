@@ -10,6 +10,15 @@ export class HomeComponent implements OnInit {
   public bookmarkletRaw: string;
   public bookmarklet: SafeUrl;
 
+  public static BOOKMARKLET = `
+  javascript:(function (d,u,s) {
+      s=d.createElement('script');
+      s.type='text/javascript';
+      s.src=u+'?t='+Date.now();
+      d.body.appendChild(s);
+  })(document, '%HOST_SCRIPT_URL%');
+  `;
+
   constructor(private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
@@ -25,7 +34,10 @@ export class HomeComponent implements OnInit {
       hostScriptUrl = `${window.location.protocol}//${window.location.host}/${hostScriptUrl}`;
     }
 
-    this.bookmarkletRaw = `javascript:(function(d,u,s){s=d.createElement('script');s.type='text/javascript';s.src=u+'?t='+new Date().getTime();d.body.appendChild(s)})(document, '${hostScriptUrl}');`;
+    this.bookmarkletRaw = HomeComponent.BOOKMARKLET.replace(
+      /%HOST_SCRIPT_URL%/g,
+      hostScriptUrl
+    ).replace(/(\t|\s{2,}|\n)/g, '');
     this.bookmarklet = this.sanitizer.bypassSecurityTrustUrl(
       this.bookmarkletRaw
     );

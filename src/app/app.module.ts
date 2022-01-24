@@ -11,9 +11,16 @@ import { MaterialModule } from './material-module';
 import { ViewerComponent } from './viewer/viewer.component';
 import { HomeComponent } from './home/home.component';
 import { HostComponent } from './host/host.component';
+import { CommentBackupDialogComponent } from './host/comment-backup/comment-backup-dialog.component';
 
 @NgModule({
-  declarations: [AppComponent, ViewerComponent, HomeComponent, HostComponent],
+  declarations: [
+    AppComponent,
+    ViewerComponent,
+    HomeComponent,
+    HostComponent,
+    CommentBackupDialogComponent,
+  ],
   imports: [
     BrowserModule,
     AppRoutingModule,

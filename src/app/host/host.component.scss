@@ -1,3 +1,20 @@
 :host {
   text-align: center;
 }
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  top: 0px;
+  right: 1rem;
+  position: absolute;
+  height: 64px;
+}
+
+@media (max-width: 599px) {
+  .toolbar {
+    height: 56px;
+  }
+}
