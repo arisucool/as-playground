@@ -1,5 +1,7 @@
 # as-playground
 
+<img src="https://raw.githubusercontent.com/arisucool/as-playground/master/src/assets/icon.png" alt="as-playground" width="128px" height="128px">
+
 アソビステージをちょっと便利にする遊び場 by arisu.cool 🍓
 
 https://arisucool.github.io/as-playground/
