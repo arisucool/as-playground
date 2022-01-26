@@ -178,8 +178,7 @@ class acasp_HostScript {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.onload = () => {
-        this.NicoJS = nicoJS;
-        resolve();
+        resolve(nicoJS);
       };
       script.type = "text/javascript";
       script.src = "https://mugiply.github.io/nicoJS/lib/nico.js";
