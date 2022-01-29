@@ -230,9 +230,15 @@ class acasp_HostScript {
       let newComments = this.getNewComments();
       if (newComments.length <= 0) return;
 
+      const d = new Date();
+      let eventName =
+        document.title.replace(/ \| ASOBISTAGE \| アソビストア/g, "") +
+        ` (${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()})`;
+
       this.iframeElem.contentWindow.postMessage(
         {
           type: "COMMENTS_RECEIVED",
+          eventName: eventName,
           comments: newComments,
         },
         "*"

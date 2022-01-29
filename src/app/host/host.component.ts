@@ -165,7 +165,10 @@ export class HostComponent implements OnInit {
 
         switch (message.data.type) {
           case 'COMMENTS_RECEIVED':
-            this.onReceiveCommentsFromHostScript(message.data.comments);
+            this.onReceiveCommentsFromHostScript(
+              message.data.comments,
+              message.data.eventName
+            );
             break;
           case 'PLAYER_CURRENT_TIME_CHANGED':
             this.onReceivePlayerCurrentTimeFromHostScript(
@@ -189,7 +192,10 @@ export class HostComponent implements OnInit {
     window.parent.postMessage(message, '*');
   }
 
-  async onReceiveCommentsFromHostScript(comments: Comment[]) {
+  async onReceiveCommentsFromHostScript(
+    comments: Comment[],
+    eventName: string
+  ) {
     console.log('onReceiveCommentsFromHostScript', comments);
 
     this.latestComments = comments;
@@ -202,13 +208,6 @@ export class HostComponent implements OnInit {
 
     // コメントの記録
     if (this.isCommentRecorderEnabled) {
-      let eventName =
-        window.parent && window.parent.document.title
-          ? window.parent.document.title.replace(
-              / \| ASOBISTAGE \| アソビストア/,
-              ''
-            )
-          : '不明';
       for (let comment of comments) {
         await this.commentRecorder.registerComment(eventName, comment);
       }
