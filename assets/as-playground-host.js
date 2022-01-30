@@ -178,8 +178,7 @@ class acasp_HostScript {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.onload = () => {
-        this.NicoJS = nicoJS;
-        resolve();
+        resolve(nicoJS);
       };
       script.type = "text/javascript";
       script.src = "https://mugiply.github.io/nicoJS/lib/nico.js";
@@ -231,9 +230,15 @@ class acasp_HostScript {
       let newComments = this.getNewComments();
       if (newComments.length <= 0) return;
 
+      const d = new Date();
+      let eventName =
+        document.title.replace(/ \| ASOBISTAGE \| アソビストア/g, "") +
+        ` (${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()})`;
+
       this.iframeElem.contentWindow.postMessage(
         {
           type: "COMMENTS_RECEIVED",
+          eventName: eventName,
           comments: newComments,
         },
         "*"
