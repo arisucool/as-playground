@@ -1,0 +1,11 @@
+{
+  "elementSelectors": {
+    "commentViewer": "[class^=\"commentViewer_commentViewer__\"]",
+    "commentList": "[class^=\"commentViewer_commentList__\"]",
+    "commentItem": "[class^=\"commentViewer_item__\"]",
+    "commentItemNickname": "[class^=\"commentViewer_item_nickName__\"]",
+    "commentItemText": "[class^=\"commentViewer_item_comment__\"]",
+    "player": ".vjs-tech",
+    "playerCurrentTime": ".vjs-current-time-display"
+  }
+}
