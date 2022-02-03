@@ -29,6 +29,15 @@ export class CommentRecorderService {
     });
   }
 
+  async getComments(skip = 0, limit?: number): Promise<Comment[]> {
+    await this.connectDb();
+    return await this.dbConnection.select<Comment>({
+      from: 'Comments',
+      skip: skip || null,
+      limit: limit || null,
+    });
+  }
+
   async getCommentsByEventName(
     eventName: string,
     limit?: number

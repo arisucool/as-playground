@@ -1,6 +1,12 @@
-<h2 mat-dialog-title>コメントのインポート/エクスポート</h2>
+<h2 mat-dialog-title style="margin-bottom: 5px">
+  コメントのインポート/エクスポート
+</h2>
 
-<mat-dialog-content class="mat-typography">
+<mat-dialog-content class="mat-typography" *ngIf="eventNames == null">
+  <p>しばらくお待ちください...</p>
+</mat-dialog-content>
+
+<mat-dialog-content class="mat-typography" *ngIf="eventNames != null">
   <h3>コメントのインポート</h3>
   <p>
     <input
@@ -25,9 +31,29 @@
   </p>
 
   <h3>コメントのエクスポート</h3>
-  <p>未実装</p>
+  <p style="margin-bottom: 0" *ngIf="isExporting">お待ちください...</p>
+  <p style="margin-bottom: 0" *ngIf="!isExporting">
+    <mat-form-field appearance="fill" floatLabel="always">
+      <mat-label>エクスポートするイベント</mat-label>
+      <mat-select
+        name="selectedEventName"
+        (selectionChange)="onSelectedRecordedEventName($event)"
+      >
+        <mat-option
+          *ngFor="let eventName of eventNames"
+          [value]="eventName"
+          [matTooltip]="eventName"
+          >{{ eventName }}</mat-option
+        >
+      </mat-select>
+    </mat-form-field>
+    &nbsp;&nbsp;
+    <button mat-raised-button color="primary" (click)="exportComments()">
+      エクスポート
+    </button>
+  </p>
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
+<mat-dialog-actions align="end" style="padding-top: 0">
   <button mat-button mat-dialog-close>閉じる</button>
 </mat-dialog-actions>

@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommentRecorderService } from '../comment-recorder.service';
+import * as FileSaver from 'file-saver';
 
 @Component({
   selector: 'app-comment-backup-dialog',
@@ -12,12 +13,18 @@ export class CommentBackupDialogComponent implements OnInit {
   public numOfImportedComments: number;
   public importFileError: string;
 
+  public eventNames: string[] = null;
+  public selectedRecordedEventName: string;
+  public isExporting = false;
+
   constructor(private commentRecorder: CommentRecorderService) {}
 
-  ngOnInit(): void {
+  async ngOnInit() {
     this.importedEventName = null;
     this.numOfImportedComments = -1;
     this.importFileError = null;
+
+    this.eventNames = await this.commentRecorder.getEventNames();
   }
 
   onImportFileChanged() {
@@ -46,6 +53,14 @@ export class CommentBackupDialogComponent implements OnInit {
     reader.readAsText(files[0]);
   }
 
+  openFileChooser() {
+    this.importFileInput.nativeElement.click();
+  }
+
+  onSelectedRecordedEventName(event) {
+    this.selectedRecordedEventName = event.value;
+  }
+
   async importFromJSON(json: string) {
     const data = JSON.parse(json);
 
@@ -69,7 +84,29 @@ export class CommentBackupDialogComponent implements OnInit {
     };
   }
 
-  openFileChooser() {
-    this.importFileInput.nativeElement.click();
+  async exportComments() {
+    if (!this.selectedRecordedEventName) return;
+
+    this.isExporting = true;
+
+    const eventName = this.selectedRecordedEventName;
+
+    const exportData = {
+      eventName: eventName,
+      comments: [],
+    };
+
+    let comments = await this.commentRecorder.getCommentsByEventName(eventName);
+    for (const comment of comments) {
+      let c = comment as any;
+      c.receivedDate = comment.receivedDate.getTime();
+      exportData.comments.push(c);
+    }
+
+    const blob = new Blob([JSON.stringify(exportData)], {
+      type: 'application/json',
+    });
+    FileSaver.saveAs(blob, `comments-${eventName}.json`);
+    this.isExporting = false;
   }
 }
