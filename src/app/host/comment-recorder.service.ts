@@ -46,7 +46,6 @@ export class CommentRecorderService {
     return await this.dbConnection.select<Comment>({
       from: 'Comments',
       where: { eventName: eventName },
-      limit: limit || null,
       order: {
         by: 'receivedDate',
         type: 'asc',
@@ -54,9 +53,10 @@ export class CommentRecorderService {
     });
   }
 
-  async getCommentsByEventNameAndReceivedDate(
+  async getCommentsByEventNameAndReceivedDateRange(
     eventName: string,
-    receivedDate: number
+    receivedDateStart: Date,
+    receivedDateEnd: Date
   ): Promise<Comment[]> {
     await this.connectDb();
     return await this.dbConnection.select<Comment>({
@@ -65,8 +65,8 @@ export class CommentRecorderService {
         eventName: eventName,
         receivedDate: {
           '-': {
-            low: new Date(receivedDate),
-            high: new Date(receivedDate + 999),
+            low: receivedDateStart,
+            high: receivedDateEnd,
           },
         },
       },

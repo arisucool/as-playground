@@ -97,7 +97,7 @@ class acasp_HostScript {
         height: window.innerHeight,
         font_size: 30,
         color: "#ffffff",
-        speed: 4,
+        speed: 6,
       });
       this.nicoJs.listen();
 

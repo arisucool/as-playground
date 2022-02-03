@@ -9,6 +9,7 @@ import { Comment } from './model/comment.interface';
 import { CommentRecorderService } from './comment-recorder.service';
 import { MatDialog } from '@angular/material/dialog';
 import { CommentBackupDialogComponent } from './comment-backup/comment-backup-dialog.component';
+import { CommentLoaderService } from './comment-loader.service';
 
 @Component({
   selector: 'app-host',
@@ -42,6 +43,8 @@ export class HostComponent implements OnInit {
   public selectedRecordedEventName: string;
   public commentBeginningOffsetTimeSeconds: number = -1;
 
+  public commentBuffer: Comment[] = [];
+
   // 汎用
   public objectKeys = Object.keys;
 
@@ -49,6 +52,7 @@ export class HostComponent implements OnInit {
     private route: ActivatedRoute,
     private changeDetectorRef: ChangeDetectorRef,
     private commentRecorder: CommentRecorderService,
+    private commentLoader: CommentLoaderService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog
   ) {}
@@ -70,9 +74,14 @@ export class HostComponent implements OnInit {
       this.initPeer();
     } else if (this.pageType == 'PLAYER_FRAME_PAGE') {
       this.loadCommentRecordedEvents();
+      this.commentLoader.start();
     }
 
     this.startMessagingWithHostScript();
+  }
+
+  ngOnDestroy(): void {
+    this.commentLoader.stop();
   }
 
   loadConfig(): void {
@@ -142,13 +151,32 @@ export class HostComponent implements OnInit {
     const eventNames = await this.commentRecorder.getEventNames();
     this.commentRecordedEvents = {};
     for (const eventName of eventNames) {
+      // 当該イベントのコメントをいくつか取得
       const beginningComments =
         await this.commentRecorder.getCommentsByEventName(eventName, 200);
+
+      let beginningCommentIndex = 0;
+
+      // 開幕コメントっぽい項目を検索
+      let indexA = beginningComments.findIndex((comment) => {
+        return comment.comment.match(/(開演|もうすぐ|まもなく)/);
+      });
+      if (indexA != -1) {
+        let indexB = beginningComments.findIndex((comment) => {
+          return comment.comment.match(/(はじまった|きたああ|きたわね)/);
+        });
+        if (indexB != -1) beginningCommentIndex = indexB;
+      }
+
+      // イベントリストへ挿入
       this.commentRecordedEvents[eventName] = {
         eventName: eventName,
         allBeginningComments: beginningComments,
-        beginningComments: beginningComments.slice(0, 4),
-        beginningCommentIndex: 0,
+        beginningComments: beginningComments.slice(
+          beginningCommentIndex,
+          beginningCommentIndex + 4
+        ),
+        beginningCommentIndex: beginningCommentIndex,
       };
     }
   }
@@ -282,8 +310,8 @@ export class HostComponent implements OnInit {
       this.playerCurrentTimeSeconds * 1000;
 
     const targetComments =
-      await this.commentRecorder.getCommentsByEventNameAndReceivedDate(
-        this.selectedRecordedEventName,
+      await this.commentLoader.getCommentsByEventNameAndReceivedDate(
+        eventName,
         targetCommentDate
       );
 
