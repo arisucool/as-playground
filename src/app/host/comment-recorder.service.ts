@@ -47,6 +47,10 @@ export class CommentRecorderService {
       from: 'Comments',
       where: { eventName: eventName },
       limit: limit || null,
+      order: {
+        by: 'receivedDate',
+        type: 'asc',
+      },
     });
   }
 
@@ -65,6 +69,10 @@ export class CommentRecorderService {
             high: new Date(receivedDate + 999),
           },
         },
+      },
+      order: {
+        by: 'receivedDate',
+        type: 'asc',
       },
     });
   }

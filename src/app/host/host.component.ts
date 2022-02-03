@@ -143,7 +143,7 @@ export class HostComponent implements OnInit {
     this.commentRecordedEvents = {};
     for (const eventName of eventNames) {
       const beginningComments =
-        await this.commentRecorder.getCommentsByEventName(eventName, 100);
+        await this.commentRecorder.getCommentsByEventName(eventName, 200);
       this.commentRecordedEvents[eventName] = {
         eventName: eventName,
         allBeginningComments: beginningComments,

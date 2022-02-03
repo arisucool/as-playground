@@ -2,11 +2,17 @@
   コメントのインポート/エクスポート
 </h2>
 
-<mat-dialog-content class="mat-typography" *ngIf="eventNames == null">
+<mat-dialog-content
+  class="mat-typography"
+  *ngIf="eventNames == null || isProcessing"
+>
   <p>しばらくお待ちください...</p>
 </mat-dialog-content>
 
-<mat-dialog-content class="mat-typography" *ngIf="eventNames != null">
+<mat-dialog-content
+  class="mat-typography"
+  *ngIf="eventNames != null && !isProcessing"
+>
   <h3>コメントのインポート</h3>
   <p>
     <input
@@ -31,7 +37,6 @@
   </p>
 
   <h3>コメントのエクスポート</h3>
-  <p style="margin-bottom: 0" *ngIf="isExporting">お待ちください...</p>
   <p style="margin-bottom: 0" *ngIf="!isExporting">
     <mat-form-field appearance="fill" floatLabel="always">
       <mat-label>エクスポートするイベント</mat-label>

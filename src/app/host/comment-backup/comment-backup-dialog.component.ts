@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommentRecorderService } from '../comment-recorder.service';
 import * as FileSaver from 'file-saver';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-comment-backup-dialog',
@@ -15,9 +16,12 @@ export class CommentBackupDialogComponent implements OnInit {
 
   public eventNames: string[] = null;
   public selectedRecordedEventName: string;
-  public isExporting = false;
+  public isProcessing = false;
 
-  constructor(private commentRecorder: CommentRecorderService) {}
+  constructor(
+    private commentRecorder: CommentRecorderService,
+    private snackBar: MatSnackBar
+  ) {}
 
   async ngOnInit() {
     this.importedEventName = null;
@@ -35,6 +39,12 @@ export class CommentBackupDialogComponent implements OnInit {
       return;
     }
 
+    const snackBar = this.snackBar.open(
+      'インポートしています...。コメント数が多い場合は、数十秒〜数分かかる場合があります。',
+      null
+    );
+    this.isProcessing = true;
+
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
@@ -49,6 +59,8 @@ export class CommentBackupDialogComponent implements OnInit {
         this.numOfImportedComments = -1;
         this.importFileError = e.message;
       }
+      this.isProcessing = false;
+      snackBar.dismiss();
     };
     reader.readAsText(files[0]);
   }
@@ -87,7 +99,12 @@ export class CommentBackupDialogComponent implements OnInit {
   async exportComments() {
     if (!this.selectedRecordedEventName) return;
 
-    this.isExporting = true;
+    const snackBar = this.snackBar.open(
+      'エクスポートしています...。コメント数が多い場合は、数十秒〜数分かかる場合があります。',
+      null
+    );
+
+    this.isProcessing = true;
 
     const eventName = this.selectedRecordedEventName;
 
@@ -107,6 +124,7 @@ export class CommentBackupDialogComponent implements OnInit {
       type: 'application/json',
     });
     FileSaver.saveAs(blob, `comments-${eventName}.json`);
-    this.isExporting = false;
+    this.isProcessing = false;
+    snackBar.dismiss();
   }
 }
