@@ -7,11 +7,11 @@ class acasp_HostScript {
 
   async init() {
     // 変数を初期化
-    this.comments = {};
     this.iframeElem = null;
     this.commentWatchingTimerId = null;
     this.playerCurrentTimeWatchingTimerId = null;
     this.playerCurrentTime = "";
+    this.overlayCommentsElem = null;
 
     // コメント一覧の要素を取得
     this.commentViewerElem = document.body.querySelector(
@@ -24,33 +24,27 @@ class acasp_HostScript {
       : null;
 
     // 動画再生領域の要素を取得 (動画にあわせてコメントを重ねて表示するために使用)
-    this.playerFrameElem = null;
-    for (const frameElem of document.body.querySelectorAll("iframe")) {
-      if (frameElem.src.match(/playervspf.channel.or.jp/)) {
-        this.playerFrameElem = frameElem;
-        break;
-      }
-    }
     this.playerElem = document.body.querySelector(".vjs-tech");
+    this.playerContainerElem = document.body.querySelector(".video-js");
 
     // ページの種別を特定
-    if (this.commentListElem) {
-      this.pageType = "REALTIME_PLAY_PAGE"; // リアルタイム再生画面
-    } else if (this.playerFrameElem) {
+    if (
+      window.location.href.match(
+        /archive/ && this.commentListElem && this.playerElem
+      )
+    ) {
       this.pageType = "ARCHIVE_PLAY_PAGE"; // アーカイブ再生画面
-    } else if (this.playerElem) {
-      this.pageType = "PLAYER_FRAME_PAGE"; // プレーヤーフレーム内画面
+    } else if (this.commentListElem) {
+      this.pageType = "REALTIME_PLAY_PAGE"; // リアルタイム再生画面
     } else {
       this.pageType = "UNKNOWN"; // 不明な画面
     }
-
-    // Chrome 拡張機能環境、かつ、アーカイブ再生画面ならば
-    if (this.loader === "chrome_ext" && this.pageType == "ARCHIVE_PLAY_PAGE") {
-      // ブックマークレット環境ならば、プレーヤーフレームを単体表示するための案内が必要であるのに対し、
-      // Chrome 拡張機能環境ならば、プレーヤーフレーム内に別インスタンスでホストスクリプトを読み込めているので、
-      // 自身は仕事しなくて良い
-      return;
-    }
+    console.log(
+      `[acasp_HostScript] init - pageType = ${this.pageType}`,
+      this.commentViewerElem,
+      this.commentListElem,
+      this.playerElem
+    );
 
     // window.postMessage を介したメッセージを取得するためのイベントリスナを設定
     window.addEventListener(
@@ -84,20 +78,23 @@ class acasp_HostScript {
       this.startCommentWatching();
     }
 
-    // プレーヤーフレーム内画面ならば
-    if (this.pageType == "PLAYER_FRAME_PAGE") {
+    // アーカイブ再生画面ならば
+    if (this.pageType == "ARCHIVE_PLAY_PAGE") {
       // 動画再生領域のタイムスタンプを監視
       this.startPlayerCurrentTimeWatching();
+
+      // コメント表示のための領域を生成
+      this.initOverlayCommentsElem();
 
       // NicoJS (コメント表示ライブラリ) を読み込み
       const nicoJS = await this.loadNicoJS();
       this.nicoJs = new nicoJS({
-        app: document.getElementById("embed"),
+        app: this.overlayCommentsElem,
         width: window.innerWidth,
         height: window.innerHeight,
         font_size: 30,
         color: "#ffffff",
-        speed: 6,
+        speed: 7,
       });
       this.nicoJs.listen();
 
@@ -105,6 +102,9 @@ class acasp_HostScript {
       window.addEventListener("resize", () => {
         this.nicoJs.resize(window.innerWidth, window.innerHeight);
       });
+
+      // コメント一覧の新着コメントを監視
+      this.startCommentWatching();
     }
   }
 
@@ -155,7 +155,7 @@ class acasp_HostScript {
         this.toggleIframeVisiblity();
       });
       this.toggleBtnElem.innerHTML = "&nbsp;";
-      this.toggleBtnElem.style.background = "rgba(150, 150, 150, 0.4)";
+      this.toggleBtnElem.style.background = "rgba(200, 200, 200, 0.4)";
       this.toggleBtnElem.style.borderRadius = "20px";
       this.toggleBtnElem.style.cursor = "pointer";
       this.toggleBtnElem.style.textAlign = "center";
@@ -168,6 +168,27 @@ class acasp_HostScript {
 
       document.body.appendChild(this.toggleBtnElem);
     });
+  }
+
+  async initOverlayCommentsElem() {
+    if (!this.playerContainerElem) return;
+
+    const overlayCommentsContainerElem = document.createElement("div");
+    overlayCommentsContainerElem.className = "overlay-comments-container";
+    overlayCommentsContainerElem.style.bottom = "0px";
+    overlayCommentsContainerElem.style.right = "0px";
+    overlayCommentsContainerElem.style.left = "0px";
+    overlayCommentsContainerElem.style.position = "absolute";
+    overlayCommentsContainerElem.style.top = "0px";
+    overlayCommentsContainerElem.style.width = "100%";
+    overlayCommentsContainerElem.style.height = "100%";
+    overlayCommentsContainerElem.style.pointerEvents = "none";
+
+    const overlayCommentsElem = document.createElement("div");
+    this.overlayCommentsElem = overlayCommentsElem;
+
+    overlayCommentsContainerElem.appendChild(this.overlayCommentsElem);
+    this.playerContainerElem.appendChild(overlayCommentsContainerElem);
   }
 
   async loadNicoJS() {
@@ -224,11 +245,13 @@ class acasp_HostScript {
   }
 
   startCommentWatching() {
+    console.log(`[acasp_HostScript] startCommentWatching`);
+
     this.stopCommentWatching();
 
     this.commentWatchingTimerId = window.setInterval(() => {
-      let newComments = this.getNewComments();
-      if (newComments.length <= 0) return;
+      let comments = this.getComments();
+      if (comments.length <= 0) return;
 
       const d = new Date();
       let eventName =
@@ -239,15 +262,16 @@ class acasp_HostScript {
         {
           type: "COMMENTS_RECEIVED",
           eventName: eventName,
-          comments: newComments,
+          comments: comments,
         },
         "*"
       );
-    }, 500);
+    }, 100);
   }
 
   startPlayerCurrentTimeWatching() {
-    console.log("startPlayerCurrentTimeWatching");
+    console.log("[acasp_HostScript] startPlayerCurrentTimeWatching");
+
     this.stopPlayerCurrentTimeWatching();
 
     this.playerCurrentTimeWatchingTimerId = window.setInterval(() => {
@@ -284,11 +308,7 @@ class acasp_HostScript {
   }
 
   getComments() {
-    return this.comments;
-  }
-
-  getNewComments() {
-    let newComments = [];
+    let comments = [];
 
     let itemElems = this.commentListElem.querySelectorAll(
       '[class^="commentViewer_item__"]'
@@ -311,16 +331,8 @@ class acasp_HostScript {
 
       let commentId =
         btoa(encodeURIComponent(nickname)) + btoa(encodeURIComponent(comment));
-      if (this.comments[commentId]) continue;
 
-      this.comments[commentId] = {
-        nickname: nickname,
-        nicknameColor: nicknameColor,
-        comment: comment,
-        receivedDate: new Date(),
-      };
-
-      newComments.push({
+      comments.push({
         id: commentId,
         nickname: nickname,
         nicknameColor: nicknameColor,
@@ -329,7 +341,7 @@ class acasp_HostScript {
       });
     }
 
-    return newComments.slice().reverse();
+    return comments.slice().reverse();
   }
 
   getPlayerCurrentTime() {

@@ -26,24 +26,13 @@ export class HostComponent implements OnInit {
   public pageType: string;
 
   // コメント記録用
+  public eventName: string = null;
   public latestComments: any[] = [];
   public isCommentRecorderEnabled = false;
 
   // コメント再生用
-  public playerFramePageOpened = false;
+  public allComments: { [key: string]: Comment } = {};
   public playerCurrentTimeSeconds: number;
-  public commentRecordedEvents: {
-    [key: string]: {
-      eventName: string;
-      allBeginningComments: Comment[];
-      beginningComments: Comment[];
-      beginningCommentIndex: number;
-    };
-  };
-  public selectedRecordedEventName: string;
-  public commentBeginningOffsetTimeSeconds: number = -1;
-
-  public commentBuffer: Comment[] = [];
 
   // 汎用
   public objectKeys = Object.keys;
@@ -61,20 +50,17 @@ export class HostComponent implements OnInit {
     this.loadConfig();
 
     switch (this.route.snapshot.queryParams.pageType) {
-      case 'REALTIME_PLAY_PAGE':
       case 'ARCHIVE_PLAY_PAGE':
-      case 'PLAYER_FRAME_PAGE':
+        this.commentLoader.start();
+      case 'REALTIME_PLAY_PAGE':
         this.pageType = this.route.snapshot.queryParams.pageType;
         break;
       default:
         this.pageType = 'UNKNOWN';
     }
 
-    if (this.pageType == 'REALTIME_PLAY_PAGE') {
+    if (this.pageType != 'UNKNOWN') {
       this.initPeer();
-    } else if (this.pageType == 'PLAYER_FRAME_PAGE') {
-      this.loadCommentRecordedEvents();
-      this.commentLoader.start();
     }
 
     this.startMessagingWithHostScript();
@@ -147,40 +133,6 @@ export class HostComponent implements OnInit {
     });
   }
 
-  async loadCommentRecordedEvents() {
-    const eventNames = await this.commentRecorder.getEventNames();
-    this.commentRecordedEvents = {};
-    for (const eventName of eventNames) {
-      // 当該イベントのコメントをいくつか取得
-      const beginningComments =
-        await this.commentRecorder.getCommentsByEventName(eventName, 200);
-
-      let beginningCommentIndex = 0;
-
-      // 開幕コメントっぽい項目を検索
-      let indexA = beginningComments.findIndex((comment) => {
-        return comment.comment.match(/(開演|もうすぐ|まもなく)/);
-      });
-      if (indexA != -1) {
-        let indexB = beginningComments.findIndex((comment) => {
-          return comment.comment.match(/(はじまった|きたああ|きたわね)/);
-        });
-        if (indexB != -1) beginningCommentIndex = indexB;
-      }
-
-      // イベントリストへ挿入
-      this.commentRecordedEvents[eventName] = {
-        eventName: eventName,
-        allBeginningComments: beginningComments,
-        beginningComments: beginningComments.slice(
-          beginningCommentIndex,
-          beginningCommentIndex + 4
-        ),
-        beginningCommentIndex: beginningCommentIndex,
-      };
-    }
-  }
-
   startMessagingWithHostScript() {
     window.addEventListener(
       'message',
@@ -224,41 +176,45 @@ export class HostComponent implements OnInit {
     comments: Comment[],
     eventName: string
   ) {
-    console.log('onReceiveCommentsFromHostScript', comments);
+    console.log('onReceiveCommentsFromHostScript', eventName, comments);
 
-    this.latestComments = comments;
+    this.eventName = eventName;
+
+    const newComments = [];
+
+    for (let comment of comments) {
+      if (comment.id in this.allComments) continue;
+      this.allComments[comment.id] = comment;
+      newComments.push(comment);
+    }
+
+    this.latestComments = newComments;
+
+    // オーバレイでコメントを表示
+    this.transferMessageToHostScript({
+      type: 'SHOW_OVERLAY_COMMENTS',
+      comments: newComments,
+    });
 
     // コメントをビューアへ転送
     this.transferMessageToViewer({
       type: 'COMMENTS_RECEIVED',
       comments: comments,
     });
-
-    // コメントの記録
-    if (this.isCommentRecorderEnabled) {
-      for (let comment of comments) {
-        await this.commentRecorder.registerComment(eventName, comment);
-      }
-    }
   }
 
   async onReceivePlayerCurrentTimeFromHostScript(currentTime: string) {
     console.log('onReceivePlayerCurrentTimeFromHostScript', currentTime);
-    this.playerCurrentTimeSeconds = this.timeStringToSeconds(currentTime);
+    const playerCurrentTimeSeconds = this.timeStringToSeconds(currentTime);
 
-    // コメント再生が有効ならば、オーバレイコメントを表示
     if (
-      this.selectedRecordedEventName &&
-      this.commentBeginningOffsetTimeSeconds != -1
+      3 <= Math.abs(this.playerCurrentTimeSeconds - playerCurrentTimeSeconds)
     ) {
-      const comments = await this.getCommentsOfCurrentTime();
-      if (0 < comments.length) {
-        this.transferMessageToHostScript({
-          type: 'SHOW_OVERLAY_COMMENTS',
-          comments: comments,
-        });
-      }
+      // 3秒以上の差があれば、シークしたとみなし、既存のオーバレイ再生済みのコメントをクリア
+      this.allComments = {};
     }
+
+    this.playerCurrentTimeSeconds = playerCurrentTimeSeconds;
   }
 
   transferMessageToViewer(message: any) {
@@ -272,75 +228,10 @@ export class HostComponent implements OnInit {
 
   onReceiveMessageFromViewer(message: string) {}
 
-  onSelectedRecordedEventName(event) {
-    this.selectedRecordedEventName = event.value;
-  }
-
-  cancelCommentPlayback() {
-    const eventName = this.selectedRecordedEventName;
-    this.commentRecordedEvents[eventName].beginningCommentIndex = 0;
-    this.commentRecordedEvents[eventName].beginningComments =
-      this.commentRecordedEvents[eventName].allBeginningComments.slice(0, 4);
-    this.selectedRecordedEventName = null;
-    this.commentBeginningOffsetTimeSeconds = -1;
-  }
-
-  skipBeginningComment() {
-    const eventName = this.selectedRecordedEventName;
-    this.commentRecordedEvents[eventName].beginningCommentIndex += 4;
-
-    this.commentRecordedEvents[eventName].beginningComments =
-      this.commentRecordedEvents[eventName].allBeginningComments.slice(
-        this.commentRecordedEvents[eventName].beginningCommentIndex,
-        this.commentRecordedEvents[eventName].beginningCommentIndex + 4
-      );
-  }
-
-  async getCommentsOfCurrentTime(): Promise<Comment[]> {
-    if (!this.selectedRecordedEventName) return [];
-
-    const eventName = this.selectedRecordedEventName;
-    const beginningComments =
-      this.commentRecordedEvents[eventName].beginningComments;
-    if (beginningComments.length <= 0) return [];
-
-    const targetCommentDate =
-      beginningComments[0].receivedDate.getTime() -
-      this.commentBeginningOffsetTimeSeconds * 1000 +
-      this.playerCurrentTimeSeconds * 1000;
-
-    const targetComments =
-      await this.commentLoader.getCommentsByEventNameAndReceivedDate(
-        eventName,
-        targetCommentDate
-      );
-
-    return targetComments;
-  }
-
-  setCommentBeginningOffsetTime() {
-    if (!this.playerCurrentTimeSeconds) {
-      this.commentBeginningOffsetTimeSeconds = 0;
-    } else {
-      this.commentBeginningOffsetTimeSeconds = this.playerCurrentTimeSeconds;
-    }
-
-    this.snackBar.open(
-      `コメント再生の準備が整いました。映像の再生ボタンを押してください。`,
-      null,
-      { duration: 5000 }
-    );
-  }
-
-  openPlayerFramePage() {
-    this.transferMessageToHostScript({ type: 'OPEN_PLAYER_FRAME_PAGE' });
-    this.playerFramePageOpened = true;
-  }
-
   openCommentBackupDialog() {
     const dialogRef = this.dialog.open(CommentBackupDialogComponent);
     dialogRef.afterClosed().subscribe(async (result) => {
-      await this.loadCommentRecordedEvents();
+      // TODO:
     });
   }
 
