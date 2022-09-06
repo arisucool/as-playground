@@ -155,7 +155,7 @@ class acasp_HostScript {
         this.toggleIframeVisiblity();
       });
       this.toggleBtnElem.innerHTML = "&nbsp;";
-      this.toggleBtnElem.style.background = "rgba(150, 150, 150, 0.4)";
+      this.toggleBtnElem.style.background = "rgba(200, 200, 200, 0.4)";
       this.toggleBtnElem.style.borderRadius = "20px";
       this.toggleBtnElem.style.cursor = "pointer";
       this.toggleBtnElem.style.textAlign = "center";
