@@ -51,7 +51,7 @@ export class HostComponent implements OnInit {
 
     switch (this.route.snapshot.queryParams.pageType) {
       case 'ARCHIVE_PLAY_PAGE':
-        this.commentLoader.start();
+      //this.commentLoader.start();
       case 'REALTIME_PLAY_PAGE':
         this.pageType = this.route.snapshot.queryParams.pageType;
         break;

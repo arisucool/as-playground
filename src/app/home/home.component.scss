@@ -1,0 +1,36 @@
+:host {
+  display: block;
+  padding: 0 1rem;
+}
+
+a {
+  color: #3f51b5;
+}
+
+small {
+  font-size: 0.8rem;
+}
+
+h3 {
+  color: #444444;
+}
+
+h4 {
+  color: #333333;
+}
+
+hr {
+  border: solid #aaa 1px;
+}
+
+mat-card {
+  margin: 1.5rem 0 1.5rem 0;
+}
+
+mat-card-title {
+  font-size: 1.4rem;
+  padding-left: 0.5rem;
+}
+mat-card-content {
+  margin: 0.75rem 0.75rem 0.75rem 0.8rem;
+}

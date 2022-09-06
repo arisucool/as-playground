@@ -1,70 +1,106 @@
-<h2>できること</h2>
+<div class="caption">
+  <h2>as-playground へようこそ</h2>
+</div>
 
-<ul>
-  <li>コメントのニコニコ風表示</li>
-  <li>コメントのスマートフォン連携 (表示のみ)</li>
-  <li>コメントからのチャプタ生成 (未実装)</li>
-</ul>
+<mat-card>
+  <mat-card-title>アソビステージをちょっと便利にする遊び場</mat-card-title>
+  <mat-card-content>
+    主な機能:
+    <ul>
+      <li>コメントのニコニコ風表示</li>
+      <li>コメントのスマートフォン連携 (表示のみ)</li>
+    </ul>
+    <small
+      >今後の実装予定やお知らせなどは、
+      <a href="https://github.com/arisucool/as-playground" target="_blank"
+        >as-playground by arisu.cool 🍓</a
+      >
+      プロジェクトページ、または
+      <a href="https://twitter.com/arisucool" target="_blank" rel="noopener"
+        >@arisucool</a
+      >
+      をご覧ください</small
+    >
+  </mat-card-content>
+</mat-card>
 
-<hr />
-<h2>使用方法</h2>
+<mat-card>
+  <mat-card-title>使い方</mat-card-title>
+  <mat-card-content>
+    <h3>1. ご承諾事項・免責への同意</h3>
 
-<h3>1. ブックマークレットの追加</h3>
+    <p>
+      <a
+        href="https://github.com/arisucool/as-playground#%E3%81%94%E6%89%BF%E8%AB%BE%E4%BA%8B%E9%A0%85-"
+        target="_blank"
+        >ご承諾事項・免責</a
+      >
+      にご同意ください。ご使用になられた時点で同意いただいたものとみなします。
+    </p>
 
-<h4>PC</h4>
+    <h3>2. ブックマークレットの追加</h3>
 
-<p>以下のボタンをブックマークバーへドラッグアンドドロップしてください。</p>
-<p>
-  <a [href]="bookmarklet" mat-raised-button color="primary">as-playground</a>
-</p>
+    <h4>PC - Google Chrome</h4>
 
-<h4>iOS / iPad OS</h4>
+    <p>以下のボタンをブックマークバーへドラッグアンドドロップしてください。</p>
+    <p>
+      <a [href]="bookmarklet" mat-raised-button color="primary"
+        >as-playground</a
+      >
+    </p>
 
-<ol>
-  <li>
-    Safari にて、適当なページ (例えば、現在のページ)
-    を「お気に入りへ追加」してください。
-  </li>
-  <li>
-    お気に入り一覧を開いて、先ほどブックマークしたページをロングタップし、「編集」をタップしてください。
-  </li>
-  <li>
-    以下の内容をコピーして、URL欄へ貼り付けてください。<br /><br />
-    <mat-form-field appearance="fill" style="width: 50%">
-      <textarea matInput rows="5" cols="10" readonly>{{
-        bookmarkletRaw
-      }}</textarea>
-    </mat-form-field>
-  </li>
-</ol>
+    <h4>iOS / iPad OS - Safari</h4>
 
-<h3>2. as-playground の起動</h3>
+    <ol>
+      <li>
+        Safari にて、適当なページ (例えば、現在のページ)
+        を「お気に入りへ追加」してください。
+      </li>
+      <li>
+        お気に入り一覧を開いて、先ほどブックマークしたページをロングタップし、「編集」をタップしてください。
+      </li>
+      <li>
+        以下の内容をコピーして、URL欄へ貼り付けてください。<br /><br />
+        <mat-form-field appearance="fill" style="width: 50%">
+          <textarea matInput rows="3" cols="10" readonly>{{
+            bookmarkletRaw
+          }}</textarea>
+        </mat-form-field>
+      </li>
+    </ol>
 
-<ol>
-  <li>
-    アソビステージにて、コメントのある画面 (エントランス画面、公演視聴画面など)
-    を開いてください。
-  </li>
-  <li>先ほど保存したブックマークレットをクリックしてください。</li>
-  <li>
-    画面右下に as-playground
-    の領域が表示されので、画面の指示に従って操作してください。
-  </li>
-</ol>
+    <h3>3. as-playground の起動</h3>
 
-<hr />
+    <ol>
+      <li>
+        アソビステージにて、コメントのある画面
+        (エントランス画面、公演視聴画面、アーカイブ視聴画面など)
+        を開いてください。
+      </li>
+      <li>続けて、先ほど保存したブックマークレットをクリックしてください。</li>
+      <li>
+        画面右下に as-playground
+        の領域が表示されので、画面の指示に従って操作してください。
+      </li>
+    </ol>
+  </mat-card-content>
+</mat-card>
 
-<h2>ライセンス</h2>
+<mat-card>
+  <mat-card-title>ライセンス・開発について</mat-card-title>
+  <mat-card-content>
+    <p>
+      このアプリケーションは、
+      <a href="https://github.com/arisucool/as-playground" target="_blank"
+        >as-playground</a
+      >
+      by arisu.cool 🍓 をベースとしたオープンソースソフトウェアです。<br />
 
-<p>
-  このシステムは、
-  <a href="https://github.com/arisucool/as-playground" target="_blank"
-    >as-playground</a
-  >
-  をベースとしています。<br />
-  サードパーティライセンスについては、<a
-    href="3rdpartylicenses.txt"
-    target="_blank"
-    >こちら</a
-  >をご覧ください。
-</p>
+      サードパーティライセンスについては、<a
+        href="3rdpartylicenses.txt"
+        target="_blank"
+        >こちら</a
+      >をご覧ください。
+    </p>
+  </mat-card-content>
+</mat-card>

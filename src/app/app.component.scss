@@ -14,3 +14,50 @@
   padding: 1rem;
   width: 100%;
 }
+
+// 見出し
+
+::ng-deep div.caption {
+  background: #4f4ba5;
+  box-sizing: border-box;
+  box-shadow: -7px 3px 5px -1px rgba(0, 0, 0, 0.2);
+  color: #fafafa;
+  display: inline-block;
+  height: 60px;
+  line-height: 60px;
+  margin-left: -4%;
+  padding: 7px 0;
+  position: relative;
+  text-align: center;
+}
+
+::ng-deep div.caption h2 {
+  font-size: 1.4rem;
+  font-family: Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans",
+    "BIZ UDPGothic", Meiryo, sans-serif;
+  font-weight: lighter;
+  font-style: italic;
+  margin: 0;
+  line-height: 46px;
+  padding: 0 4rem 0 4rem;
+  white-space: nowrap;
+}
+
+::ng-deep div.caption h2 mat-icon {
+  font-size: 1.8rem;
+  margin-top: -2px;
+  vertical-align: middle;
+}
+
+::ng-deep div.caption:after {
+  position: absolute;
+  content: "";
+  z-index: 1;
+  top: 0;
+  right: 0;
+  width: 0px;
+  height: 0px;
+  border-width: 30px 15px 30px 0px;
+  border-color: transparent #efefef transparent transparent;
+  border-style: solid;
+}

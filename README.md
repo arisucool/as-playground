@@ -33,7 +33,7 @@ https://arisucool.github.io/as-playground/
 
 ### Chrome 拡張機能版　(PC 向け)
 
-→ [as-playground-chrome-extension](https://github.com/arisucool/as-playground-chrome-extension)
+→ [as-playground-chrome-extension](https://github.com/arisucool/as-playground-chrome-extension) (開発中)
 
 ---
 
