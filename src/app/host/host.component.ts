@@ -29,7 +29,7 @@ export class HostComponent implements OnInit {
 
   // アクティブなタブ
   public activeTabName: 'mobileLink' | 'commentAnalysis' | 'chapter' =
-    'chapter';
+    'mobileLink';
 
   // イベント名
   public eventName: string = null;
