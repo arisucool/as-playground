@@ -4,5 +4,5 @@ export interface Comment {
   nicknameColor: string;
   comment: string;
   eventName: string;
-  receivedDate: Date;
+  receivedTime: number;
 }

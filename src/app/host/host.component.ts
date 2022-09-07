@@ -174,12 +174,6 @@ export class HostComponent implements OnInit {
     window.addEventListener(
       'message',
       (message: MessageEvent) => {
-        console.log(
-          'startMessagingWithHostScript',
-          'message received...',
-          message
-        );
-
         switch (message.data.type) {
           case 'COMMENTS_RECEIVED':
             this.onReceiveCommentsFromHostScript(
@@ -192,6 +186,12 @@ export class HostComponent implements OnInit {
               message.data.currentTime
             );
             break;
+          default:
+            console.warn(
+              'startMessagingWithHostScript',
+              'Unknown message received...',
+              message
+            );
         }
       },
       false
@@ -207,20 +207,38 @@ export class HostComponent implements OnInit {
     comments: Comment[],
     eventName: string
   ) {
-    console.log('onReceiveCommentsFromHostScript', eventName, comments);
-
-    this.eventName = eventName;
+    if (this.eventName !== eventName) {
+      console.log('onReceiveCommentsFromHostScript - eventName = ', eventName);
+      this.eventName = eventName;
+    }
 
     // 新しいコメントのみを抽出
     // (コメントの取得は、コメントリストのDOM要素から行なっており、ユーザがコメントリストのスクロールを行うと、重複してコメントが取得される場合があるため。)
     const newComments = [];
     for (let comment of comments) {
-      if (comment.id in this.allComments) continue;
+      if (comment.id in this.allComments) {
+        // すでに同じコメントを受信済みならばスキップ
+        continue;
+      }
+
+      // コメントの時刻を設定
+      comment.receivedTime = this.playerCurrentTimeSeconds;
+
+      // コメントを配列へ追加
       this.allComments[comment.id] = comment;
       newComments.push(comment);
     }
 
+    if (newComments.length <= 0) {
+      return;
+    }
+
     this.latestComments = newComments;
+
+    console.log(
+      `onReceiveCommentsFromHostScript - new comments (${newComments.length}) = `,
+      newComments
+    );
 
     // オーバレイでコメントを表示
     this.transferMessageToHostScript({
@@ -233,6 +251,11 @@ export class HostComponent implements OnInit {
       type: 'COMMENTS_RECEIVED',
       comments: comments,
     });
+
+    // コメントをデータベースへ保存
+    for (const comment of newComments) {
+      await this.commentRecorder.registerComment(this.eventName, comment);
+    }
   }
 
   /**

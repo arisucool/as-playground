@@ -36,7 +36,7 @@ export class CommentLoaderService {
     eventName: string,
     receivedDate: number
   ): Promise<Comment[]> {
-    if (!this.events[eventName]) {
+    /*if (!this.events[eventName]) {
       this.events[eventName] = {
         currentCommentDate: receivedDate,
         comments: [],
@@ -49,7 +49,8 @@ export class CommentLoaderService {
     return this.events[eventName].comments.filter((comment) => {
       const t = comment.receivedDate.getTime();
       return receivedDate <= t && t <= receivedDate + 999;
-    });
+    });*/
+    return [];
   }
 
   private async onIntervalArrived() {
