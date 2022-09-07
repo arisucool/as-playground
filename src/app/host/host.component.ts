@@ -25,6 +25,9 @@ export class HostComponent implements OnInit {
   // ページの種別
   public pageType: string;
 
+  // アクティブなタブ
+  public activeTabName: 'mobileLink' | 'commentAnalysis' = 'mobileLink';
+
   // コメント記録用
   public eventName: string = null;
   public latestComments: any[] = [];
@@ -41,12 +44,11 @@ export class HostComponent implements OnInit {
     private route: ActivatedRoute,
     private changeDetectorRef: ChangeDetectorRef,
     private commentRecorder: CommentRecorderService,
-    private commentLoader: CommentLoaderService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit() {
     this.loadConfig();
 
     switch (this.route.snapshot.queryParams.pageType) {
@@ -64,11 +66,11 @@ export class HostComponent implements OnInit {
     }
 
     this.startMessagingWithHostScript();
+
+    await this.commentRecorder.connectDb();
   }
 
-  ngOnDestroy(): void {
-    this.commentLoader.stop();
-  }
+  ngOnDestroy(): void {}
 
   loadConfig(): void {
     let isCommentRecorderEnabled = window.localStorage.getItem(

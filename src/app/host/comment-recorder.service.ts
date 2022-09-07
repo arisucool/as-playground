@@ -47,31 +47,31 @@ export class CommentRecorderService {
       from: 'Comments',
       where: { eventName: eventName },
       order: {
-        by: 'receivedDate',
+        by: 'receivedTime',
         type: 'asc',
       },
     });
   }
 
-  async getCommentsByEventNameAndReceivedDateRange(
+  async getCommentsByEventNameAndReceivedTimeRange(
     eventName: string,
-    receivedDateStart: Date,
-    receivedDateEnd: Date
+    receivedTimeStart: number,
+    receivedTimeEnd: number
   ): Promise<Comment[]> {
     await this.connectDb();
     return await this.dbConnection.select<Comment>({
       from: 'Comments',
       where: {
         eventName: eventName,
-        receivedDate: {
+        receivedTime: {
           '-': {
-            low: receivedDateStart,
-            high: receivedDateEnd,
+            low: receivedTimeStart,
+            high: receivedTimeEnd,
           },
         },
       },
       order: {
-        by: 'receivedDate',
+        by: 'receivedTime',
         type: 'asc',
       },
     });

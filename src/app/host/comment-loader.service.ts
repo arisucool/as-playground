@@ -77,6 +77,7 @@ export class CommentLoaderService {
   }
 
   private async tick(): Promise<number> {
+    /*
     let startedAt = Date.now();
 
     for (const eventName of Object.keys(this.events)) {
@@ -89,7 +90,7 @@ export class CommentLoaderService {
       let startedAtForEvent = Date.now();
 
       const comments =
-        await this.commentRecorder.getCommentsByEventNameAndReceivedDateRange(
+        await this.commentRecorder.getCommentsByEventNameAndReceivedTimeRange(
           eventName,
           new Date(
             event.currentCommentDate - CommentLoaderService.BUFFER_MILLISECONDS
@@ -108,6 +109,8 @@ export class CommentLoaderService {
       );
     }
 
-    return Date.now() - startedAt;
+    return Date.now() - startedAt;*/
+
+    return 0;
   }
 }

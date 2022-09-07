@@ -16,7 +16,7 @@ export class DataStoreService {
       nickname: { notNull: true, dataType: 'string' },
       nicknameColor: { notNull: true, dataType: 'string' },
       comment: { notNull: true, dataType: 'string' },
-      receivedDate: { notNull: true, dataType: 'date_time' },
+      receivedTime: { notNull: true, dataType: 'number' },
     },
   };
 

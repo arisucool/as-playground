@@ -116,7 +116,7 @@ export class CommentBackupDialogComponent implements OnInit {
     let comments = await this.commentRecorder.getCommentsByEventName(eventName);
     for (const comment of comments) {
       let c = comment as any;
-      c.receivedDate = comment.receivedDate.getTime();
+      delete c.eventName;
       exportData.comments.push(c);
     }
 

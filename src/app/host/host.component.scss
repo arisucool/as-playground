@@ -2,6 +2,8 @@
   text-align: center;
 }
 
+// ツールバー
+
 .toolbar {
   display: flex;
   flex-direction: row;
@@ -17,4 +19,14 @@
   .toolbar {
     height: 56px;
   }
+}
+
+// ツールバー > タブ切り替えボタン
+
+.toolbar .tab-button {
+}
+
+.toolbar .tab-button.active {
+  background: #3f50b530;
+  color: #222;
 }

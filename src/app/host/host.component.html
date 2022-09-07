@@ -1,24 +1,40 @@
-<div *ngIf="pageType !== 'UNKNOWN'">
+<ng-container *ngIf="pageType === 'UNKNOWN'">
+  <p>
+    <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
+  </p>
+  <p>このページは非対応です</p>
+  <p style="font-size: 0.8rem">
+    アソビステージの視聴画面を開いた状態で、<br />
+    もう一度、ブックマークレットを起動してください。<br /><br />
+    ※ 視聴画面を開いていても、このエラーが表示される場合は、<br />アソビステージの仕様変更が行われた可能性があります。
+  </p>
+</ng-container>
+
+<ng-container *ngIf="pageType !== 'UNKNOWN'">
   <div class="toolbar">
+    <button
+      class="tab-button"
+      matTooltip="コメントのスマートフォン連携"
+      mat-icon-button
+      (click)="activeTabName = 'mobileLink'"
+      [ngClass]="{ active: activeTabName === 'mobileLink' }"
+      [disabled]="activeTabName === 'mobileLink'"
+    >
+      <mat-icon>smartphone</mat-icon>
+    </button>
+
+    <button
+      class="tab-button"
+      matTooltip="コメントの分析・チャプタ生成"
+      mat-icon-button
+      (click)="activeTabName = 'commentAnalysis'"
+      [ngClass]="{ active: activeTabName === 'commentAnalysis' }"
+      [disabled]="activeTabName === 'commentAnalysis'"
+    >
+      <mat-icon>leaderboard</mat-icon>
+    </button>
+
     <!--
-    <button
-      (click)="setCommentRecorderEnabled(true)"
-      *ngIf="!isCommentRecorderEnabled"
-      mat-icon-button
-      aria-label="コメントを記録する"
-      matTooltip="コメントを記録する - 記録しておくと、チャプタ自動生成などが可能になるかも (未実装)"
-    >
-      <mat-icon>comments_disabled</mat-icon>
-    </button>
-    <button
-      (click)="setCommentRecorderEnabled(false)"
-      *ngIf="isCommentRecorderEnabled"
-      mat-icon-button
-      aria-label="コメントの記録を停止する"
-      matTooltip="コメントの記録を停止する"
-    >
-      <mat-icon>comment</mat-icon>
-    </button>
     <button
       (click)="openCommentBackupDialog()"
       mat-icon-button
@@ -26,33 +42,42 @@
       matTooltip="記録したコメントのインポート/エクスポート"
     >
       <mat-icon>import_export</mat-icon>
-    </button>-->
+    </button>
+    -->
   </div>
 
-  <div *ngIf="!peerId">しばらくお待ちください...</div>
+  <!-- スマートフォン連携 -->
+  <ng-container *ngIf="activeTabName === 'mobileLink'">
+    <div *ngIf="!peerId">しばらくお待ちください...</div>
 
-  <div *ngIf="peerId && !dataConnection">
-    <p style="color: #333333; font-size: 0.8rem">
-      コメントをスマホなどから閲覧するには<br />QRコードを読み取ってください
-    </p>
-    <p>
-      <qrcode
-        [qrdata]="viewerUrl"
-        [width]="128"
-        [errorCorrectionLevel]="'M'"
-      ></qrcode>
-      <span style="font-size: 0.7rem">
-        <a
-          [href]="viewerUrl"
-          style="color: #444; text-decoration: none"
-          target="_blank"
-          rel="noopener"
-        >
-          {{ viewerUrl }}
-        </a>
-      </span>
-    </p>
-  </div>
+    <div *ngIf="peerId && !dataConnection">
+      <p style="color: #333333; font-size: 0.8rem; margin-top: 0.3rem">
+        コメントをスマートフォンなどから閲覧するには<br />QRコードを読み取ってください
+      </p>
+      <p>
+        <qrcode
+          [qrdata]="viewerUrl"
+          [width]="128"
+          [errorCorrectionLevel]="'M'"
+        ></qrcode>
+        <span style="font-size: 0.7rem">
+          <a
+            [href]="viewerUrl"
+            style="color: #444; text-decoration: none"
+            target="_blank"
+            rel="noopener"
+          >
+            {{ viewerUrl }}
+          </a>
+        </span>
+      </p>
+    </div>
 
-  <div *ngIf="peerId && dataConnection">端末が接続されています</div>
-</div>
+    <div *ngIf="peerId && dataConnection">端末が接続されています</div>
+  </ng-container>
+  <!---->
+
+  <!-- コメント分析 -->
+  <ng-container *ngIf="activeTabName === 'commentAnalysis'"> </ng-container>
+  <!---->
+</ng-container>
