@@ -1,0 +1,25 @@
+<ng-container *ngIf="chapters === undefined">
+  <p>コメントを分析して<br />チャプタを読み込んでいます...</p>
+</ng-container>
+
+<ng-container *ngIf="chapters && chapters.length === 0">
+  <p>チャプタは未検出です</p>
+</ng-container>
+
+<ng-container *ngIf="chapters && chapters.length !== 0">
+  <mat-selection-list [multiple]="false">
+    <mat-list-option
+      class="chapter"
+      *ngFor="let chapter of chapters"
+      [value]="chapter"
+    >
+      <span class="name">
+        {{ chapter.name }}
+      </span>
+
+      <span class="time">
+        {{ chapter.timeSeconds * 1000 | date: "HH:mm":"+0000" }}
+      </span>
+    </mat-list-option>
+  </mat-selection-list>
+</ng-container>

@@ -25,13 +25,24 @@
 
     <button
       class="tab-button"
-      matTooltip="コメントの分析・チャプタ生成"
+      matTooltip="コメントの分析"
       mat-icon-button
       (click)="activeTabName = 'commentAnalysis'"
       [ngClass]="{ active: activeTabName === 'commentAnalysis' }"
       [disabled]="activeTabName === 'commentAnalysis'"
     >
       <mat-icon>leaderboard</mat-icon>
+    </button>
+
+    <button
+      class="tab-button"
+      matTooltip="チャプタの生成"
+      mat-icon-button
+      (click)="activeTabName = 'chapter'"
+      [ngClass]="{ active: activeTabName === 'chapter' }"
+      [disabled]="activeTabName === 'chapter'"
+    >
+      <mat-icon>list</mat-icon>
     </button>
 
     <!--
@@ -83,6 +94,16 @@
       [eventName]="eventName"
       *ngIf="eventName"
     ></app-comment-analysis>
+  </ng-container>
+  <!---->
+
+  <!-- チャプタ生成 -->
+  <ng-container *ngIf="activeTabName === 'chapter'">
+    <app-chapter
+      [eventName]="eventName"
+      [playerCurrentTimeSeconds]="playerCurrentTimeSeconds"
+      *ngIf="eventName"
+    ></app-chapter>
   </ng-container>
   <!---->
 </ng-container>

@@ -1,4 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { interval, Subscription } from 'rxjs';
 import { CommentRecorderService } from '../comment-recorder.service';
 
 @Component({
@@ -6,16 +7,35 @@ import { CommentRecorderService } from '../comment-recorder.service';
   templateUrl: './comment-analysis.component.html',
   styleUrls: ['./comment-analysis.component.scss'],
 })
-export class CommentAnalysisComponent implements OnInit {
+export class CommentAnalysisComponent implements OnInit, OnDestroy {
+  // イベント名
   @Input()
   eventName: string;
 
+  // グラフデータ
   chartData = undefined;
+
+  // 定期的な再読み込み
+  reloadTimer: Subscription;
+  RELOAD_INTERVAL_SECONDS = 30;
 
   constructor(protected commentRecorder: CommentRecorderService) {}
 
   async ngOnInit() {
     this.load();
+
+    // 定期的な再読み込みを設定
+    this.reloadTimer = interval(this.RELOAD_INTERVAL_SECONDS * 1000).subscribe(
+      async () => {
+        await this.load();
+      }
+    );
+  }
+
+  ngOnDestroy() {
+    if (this.reloadTimer) {
+      this.reloadTimer.unsubscribe();
+    }
   }
 
   async load() {
