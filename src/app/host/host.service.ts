@@ -45,10 +45,6 @@ export class HostService {
    * @returns 秒数 (例: 90)
    */
   timeStringToSeconds(timeString: string): number {
-    if (timeString.match(/^\d+:\d+$/)) {
-      timeString = `00:${timeString}`;
-    }
-
     let arr = timeString.split(':');
     if (arr.length == 3) {
       return (

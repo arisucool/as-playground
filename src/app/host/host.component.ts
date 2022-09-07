@@ -207,6 +207,9 @@ export class HostComponent implements OnInit {
       this.eventName = eventName;
     }
 
+    if (currentTime.match(/^\d+:\d+$/)) {
+      currentTime = `00:${currentTime}`;
+    }
     const playerCurrentTimeSeconds =
       this.hostService.timeStringToSeconds(currentTime);
 
@@ -262,6 +265,9 @@ export class HostComponent implements OnInit {
   ) {
     console.log('onReceivePlayerCurrentTimeFromHostScript', currentTime);
 
+    if (currentTime.match(/^\d+:\d+$/)) {
+      currentTime = `00:${currentTime}`;
+    }
     const playerCurrentTimeSeconds =
       this.hostService.timeStringToSeconds(currentTime);
 
