@@ -105,6 +105,16 @@
       [eventName]="eventName"
       *ngIf="eventName"
     ></app-comment-analysis>
+
+    <ng-container *ngIf="!eventName">
+      <p>
+        <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
+      </p>
+      <p>映像を再生してください</p>
+      <p style="font-size: 0.8rem">
+        この機能を使用するには、映像をしばらく再生してください
+      </p>
+    </ng-container>
   </ng-container>
   <!---->
 
@@ -115,6 +125,16 @@
       [playerCurrentTimeSeconds]="playerCurrentTimeSeconds"
       *ngIf="eventName"
     ></app-chapter>
+
+    <ng-container *ngIf="!eventName">
+      <p>
+        <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
+      </p>
+      <p>映像を再生してください</p>
+      <p style="font-size: 0.8rem">
+        この機能を使用するには、映像をしばらく再生してください
+      </p>
+    </ng-container>
   </ng-container>
   <!---->
 </ng-container>
