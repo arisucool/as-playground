@@ -6,3 +6,7 @@
 p {
   font-size: 0.9rem;
 }
+
+:host ::ng-deep g[ngx-charts-axis-label] {
+  font-size: 0.8rem;
+}

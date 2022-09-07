@@ -24,11 +24,16 @@
 
 // ツールバー > タブ切り替えボタン
 
+.toolbar a,
+.toolbar button {
+  color: #333;
+}
+
 .toolbar .tab-button {
 }
 
 .toolbar .tab-button.active {
-  background: #3f50b530;
+  background: #3f50b510;
   box-shadow: inset 0px 0px 3px 0px #3f50b563;
-  color: #222;
+  color: #101010;
 }
