@@ -83,7 +83,7 @@ export class CommentRecorderService {
     await this.dbConnection.insert<Comment>({
       into: 'Comments',
       values: [comment],
-      upsert: true,
+      upsert: false,
     });
   }
 

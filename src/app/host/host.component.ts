@@ -170,7 +170,8 @@ export class HostComponent implements OnInit {
           case 'COMMENTS_RECEIVED':
             this.onReceiveCommentsFromHostScript(
               message.data.comments,
-              message.data.eventName
+              message.data.eventName,
+              message.data.playerCurrentTime
             );
             break;
           case 'PLAYER_CURRENT_TIME_CHANGED':
@@ -194,15 +195,20 @@ export class HostComponent implements OnInit {
    * ホストスクリプト (アソビステージのページ) からコメントを受信したときに呼ばれるイベントリスナ
    * @param comments 受信したコメント
    * @param eventName 受信したイベント名
+   * @param currentTime 受信した再生位置 (例: '00:01:30')
    */
   protected async onReceiveCommentsFromHostScript(
     comments: Comment[],
-    eventName: string
+    eventName: string,
+    currentTime: string
   ) {
     if (this.eventName !== eventName) {
       console.log('onReceiveCommentsFromHostScript - eventName = ', eventName);
       this.eventName = eventName;
     }
+
+    const playerCurrentTimeSeconds =
+      this.hostService.timeStringToSeconds(currentTime);
 
     // 新しいコメントのみを抽出
     // (コメントの取得は、コメントリストのDOM要素から行なっており、ユーザがコメントリストのスクロールを行うと、重複してコメントが取得される場合があるため。)
@@ -214,7 +220,7 @@ export class HostComponent implements OnInit {
       }
 
       // コメントの時刻を設定
-      comment.receivedTime = this.playerCurrentTimeSeconds;
+      comment.receivedTime = playerCurrentTimeSeconds;
 
       // コメントを配列へ追加
       this.allComments[comment.id] = comment;
@@ -255,10 +261,6 @@ export class HostComponent implements OnInit {
     currentTime: string
   ) {
     console.log('onReceivePlayerCurrentTimeFromHostScript', currentTime);
-
-    if (currentTime.match(/^\d+:\d+$/)) {
-      currentTime = `00:${currentTime}`;
-    }
 
     const playerCurrentTimeSeconds =
       this.hostService.timeStringToSeconds(currentTime);

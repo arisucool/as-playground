@@ -41,10 +41,14 @@ export class HostService {
 
   /**
    * 時刻または再生位置を秒数へ変換
-   * @param timeString 時刻または再生位置の文字列 (例: '00:01:30')
+   * @param timeString 時刻または再生位置の文字列 (例: '00:01:30' または '00:01)
    * @returns 秒数 (例: 90)
    */
   timeStringToSeconds(timeString: string): number {
+    if (timeString.match(/^\d+:\d+$/)) {
+      timeString = `00:${timeString}`;
+    }
+
     let arr = timeString.split(':');
     if (arr.length == 3) {
       return (

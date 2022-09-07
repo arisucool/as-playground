@@ -20,6 +20,10 @@
 
       <span class="time">
         {{ chapter.seekTimeSeconds * 1000 | date: "HH:mm":"+0000" }}
+        <ng-container *ngIf="chapter.timeSeconds != chapter.seekTimeSeconds">
+          &nbsp; (補正前:
+          {{ chapter.timeSeconds * 1000 | date: "HH:mm":"+0000" }})
+        </ng-container>
       </span>
     </mat-list-option>
   </mat-selection-list>

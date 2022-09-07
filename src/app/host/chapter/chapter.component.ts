@@ -64,8 +64,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
       this.eventName
     );
 
-    this.chapters = [];
-
+    const chapters = [];
     for (const comment of comments) {
       if (!comment.nickname.match(/^\s*♪\s*$/)) continue;
 
@@ -93,7 +92,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
       );
 
       // すでに挿入済みの曲かどうかをチェック
-      const exists = this.chapters.find((chapter) => {
+      const exists = chapters.find((chapter) => {
         return chapter.name === songName;
       });
       if (exists) {
@@ -104,29 +103,32 @@ export class ChapterComponent implements OnInit, OnDestroy {
       const chapter: Chapter = {
         name: songName,
         timeSeconds: comment.receivedTime,
-        seekTimeSeconds: comment.receivedTime,
+        seekTimeSeconds: comment.receivedTime + 0,
       };
 
-      // 前のチャプタとの時間差を計算
-      if (1 <= this.chapters.length) {
-        const previousChapter = this.chapters[this.chapters.length - 1];
+      // チャプタを追加
+      chapters.push(chapter);
+    }
+
+    this.chapters = chapters.map((chapter, index) => {
+      if (index == chapters.length - 1) {
+        chapter.seekTimeSeconds = Math.floor(chapter.timeSeconds / 60) * 60;
+      } else {
+        // 次のチャプタとの時間差を計算
+        const nextChapter = chapters[index + 1];
         const diffMinutes =
-          (chapter.timeSeconds - previousChapter.timeSeconds) / 60;
-        if (5 <= diffMinutes) {
-          // 5分以上の差があれば、時間を前にずらす
+          (nextChapter.timeSeconds - chapter.timeSeconds) / 60;
+        if (diffMinutes <= 2) {
+          // 2分以下しか差がなければ、時間を前にずらす
           chapter.seekTimeSeconds = chapter.timeSeconds - this.OFFSET_SECONDS;
         }
-      } else {
-        chapter.seekTimeSeconds = Math.floor(chapter.timeSeconds / 60) * 60;
       }
-
-      // チャプタを追加
-      this.chapters.push(chapter);
-    }
+      return chapter;
+    });
   }
 
   seekToChapter(chapter: Chapter) {
-    this.hostService.setPlayerCurrentTimeSeconds(chapter.seekTimeSeconds);
+    this.hostService.setPlayerCurrentTimeSeconds(chapter.seekTimeSeconds - 20);
     this.snackBar.open(`"${chapter.name}" の前後へシークします...`, null, {
       duration: 2000,
     });
