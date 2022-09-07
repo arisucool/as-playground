@@ -1,0 +1,31 @@
+<ng-container *ngIf="chartData === undefined">
+  <p>
+    コメントを集計しています...<br />
+    そのままお待ちください...
+  </p>
+</ng-container>
+
+<ng-container *ngIf="chartData !== undefined && chartData.length === 0">
+  <p>
+    コメントデータがありません
+    <br />
+    動画を再生してコメントを受信してください
+  </p>
+</ng-container>
+
+<ng-container *ngIf="chartData !== undefined">
+  <div class="chart-container">
+    <ngx-charts-line-chart
+      [view]="[440, 200]"
+      xAxis="true"
+      yAxis="true"
+      xAxisLabel="時分"
+      yAxisLabel="コメント数"
+      showXAxisLabel="true"
+      showYAxisLabel="true"
+      [results]="chartData"
+      (select)="onSelect($event)"
+    >
+    </ngx-charts-line-chart>
+  </div>
+</ng-container>

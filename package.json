@@ -10,14 +10,10 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "commit": "cz"
+    "commit": "cz",
+    "prepare": "husky install"
   },
   "private": true,
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
-    }
-  },
   "commitlint": {
     "extends": [
       "@commitlint/config-conventional"
@@ -47,6 +43,7 @@
     "@angular/platform-browser": "~12.2.15",
     "@angular/platform-browser-dynamic": "~12.2.15",
     "@angular/router": "~12.2.15",
+    "@swimlane/ngx-charts": "^20.1.0",
     "@uriopass/nosleep.js": "^0.12.1",
     "angularx-qrcode": "^12.0.0",
     "file-saver": "^2.0.5",

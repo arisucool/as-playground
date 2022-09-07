@@ -78,6 +78,11 @@
   <!---->
 
   <!-- コメント分析 -->
-  <ng-container *ngIf="activeTabName === 'commentAnalysis'"> </ng-container>
+  <ng-container *ngIf="activeTabName === 'commentAnalysis'">
+    <app-comment-analysis
+      [eventName]="eventName"
+      *ngIf="eventName"
+    ></app-comment-analysis>
+  </ng-container>
   <!---->
 </ng-container>
