@@ -24,7 +24,7 @@ class acasp_HostScript {
       : null;
 
     // 動画再生領域の要素を取得 (動画にあわせてコメントを重ねて表示するために使用)
-    this.playerElem = document.body.querySelector(".vjs-tech");
+    this.playerElem = document.body.querySelector("video.vjs-tech");
     this.playerContainerElem = document.body.querySelector(".video-js");
 
     // ページの種別を特定
@@ -64,6 +64,8 @@ class acasp_HostScript {
           this.openPlayerFramePage();
         } else if (message.data.type == "SHOW_OVERLAY_COMMENTS") {
           this.showOverlayComments(message.data.comments);
+        } else if (message.data.type === "SET_PLAYER_CURRENT_TIME") {
+          this.setPlayerCurrentTime(message.data.seconds);
         }
       },
       false
@@ -351,6 +353,10 @@ class acasp_HostScript {
     const elem = document.querySelector(".vjs-current-time-display");
 
     return elem.innerText.replace(/\s/g, "");
+  }
+
+  setPlayerCurrentTime(seconds) {
+    this.playerElem.currentTime = seconds;
   }
 }
 

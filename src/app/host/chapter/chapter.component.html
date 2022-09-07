@@ -12,13 +12,14 @@
       class="chapter"
       *ngFor="let chapter of chapters"
       [value]="chapter"
+      (click)="seekToChapter(chapter)"
     >
       <span class="name">
         {{ chapter.name }}
       </span>
 
       <span class="time">
-        {{ chapter.timeSeconds * 1000 | date: "HH:mm":"+0000" }}
+        {{ chapter.seekTimeSeconds * 1000 | date: "HH:mm":"+0000" }}
       </span>
     </mat-list-option>
   </mat-selection-list>

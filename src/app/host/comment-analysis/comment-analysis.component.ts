@@ -1,6 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { interval, Subscription } from 'rxjs';
 import { CommentRecorderService } from '../comment-recorder.service';
+import { HostService } from '../host.service';
 
 @Component({
   selector: 'app-comment-analysis',
@@ -19,7 +20,10 @@ export class CommentAnalysisComponent implements OnInit, OnDestroy {
   reloadTimer: Subscription;
   RELOAD_INTERVAL_SECONDS = 30;
 
-  constructor(protected commentRecorder: CommentRecorderService) {}
+  constructor(
+    protected commentRecorderService: CommentRecorderService,
+    protected hostService: HostService
+  ) {}
 
   async ngOnInit() {
     this.load();
@@ -39,7 +43,7 @@ export class CommentAnalysisComponent implements OnInit, OnDestroy {
   }
 
   async load() {
-    let comments = await this.commentRecorder.getCommentsByEventName(
+    let comments = await this.commentRecorderService.getCommentsByEventName(
       this.eventName
     );
 
@@ -65,7 +69,9 @@ export class CommentAnalysisComponent implements OnInit, OnDestroy {
     for (const comment of commentsSorted) {
       if (comment.receivedTimeMinutes === undefined) continue;
 
-      const timeStr = `${this.secondToTimeString(comment.receivedTimeMinutes)}`;
+      const timeStr = `${this.hostService.secondToTimeString(
+        comment.receivedTimeMinutes
+      )}`;
 
       if (tmpSeries && tmpSeries.name != timeStr) {
         chartSeries.push(tmpSeries);
@@ -99,24 +105,10 @@ export class CommentAnalysisComponent implements OnInit, OnDestroy {
     ];
   }
 
-  onSelect(data: any): void {
-    const time = data.name;
-    console.log('Item clicked', data);
-  }
-
-  secondToTimeString(second: number) {
-    const date = new Date(second * 1000);
-    return `${this.padString(`${date.getUTCHours()}`, 2, '0')}:${this.padString(
-      `${date.getUTCMinutes()}`,
-      2,
-      '0'
-    )}`;
-  }
-
-  padString(str: string, length: number, padStr: string) {
-    while (str.length < length) {
-      str = padStr + str;
-    }
-    return str;
+  onChartSelect(data: { name: string; value: string }): void {
+    const time: string = data.name;
+    this.hostService.setPlayerCurrentTimeSeconds(
+      this.hostService.timeStringToSeconds(time)
+    );
   }
 }

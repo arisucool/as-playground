@@ -10,6 +10,7 @@ import { CommentRecorderService } from './comment-recorder.service';
 import { MatDialog } from '@angular/material/dialog';
 import { CommentBackupDialogComponent } from './comment-backup/comment-backup-dialog.component';
 import { CommentLoaderService } from './comment-loader.service';
+import { HostService } from './host.service';
 
 @Component({
   selector: 'app-host',
@@ -50,7 +51,8 @@ export class HostComponent implements OnInit {
     private route: ActivatedRoute,
     private changeDetectorRef: ChangeDetectorRef,
     private commentRecorder: CommentRecorderService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private hostService: HostService
   ) {}
 
   /**
@@ -84,17 +86,6 @@ export class HostComponent implements OnInit {
   ngOnDestroy(): void {}
 
   /**
-   * フレームの表示/非表示の設定
-   * @param value 表示する場合はtrue
-   */
-  setIframeVisiblity(value: boolean) {
-    this.transferMessageToHostScript({
-      type: 'SET_IFRAME_VISIBILITY',
-      value: value,
-    });
-  }
-
-  /**
    * コメントのインポート/エクスポートダイアログの表示
    */
   openCommentBackupDialog() {
@@ -123,9 +114,9 @@ export class HostComponent implements OnInit {
 
     this.peer.on('open', () => {
       this.peerId = this.peer.id;
-      this.viewerUrl = this.generateViewerUrl(this.peerId);
+      this.viewerUrl = this.hostService.generateViewerUrl(this.peerId);
 
-      this.setIframeVisiblity(true);
+      this.hostService.setIframeVisiblity(true);
 
       this.changeDetectorRef.detectChanges();
     });
@@ -144,12 +135,12 @@ export class HostComponent implements OnInit {
 
       dataConnection.once('open', () => {
         console.log('Data connection opened.');
-        this.transferMessageToViewer({
+        this.sendMessageToViewer({
           type: 'COMMENTS_RECEIVED',
           comments: this.latestComments,
         });
 
-        this.setIframeVisiblity(false);
+        this.hostService.setIframeVisiblity(false);
       });
 
       dataConnection.on('data', (data) => {
@@ -159,7 +150,7 @@ export class HostComponent implements OnInit {
       dataConnection.once('close', () => {
         console.log('Data connection closed.');
         this.dataConnection = null;
-        this.setIframeVisiblity(true);
+        this.hostService.setIframeVisiblity(true);
         this.changeDetectorRef.detectChanges();
       });
 
@@ -242,13 +233,10 @@ export class HostComponent implements OnInit {
     );
 
     // オーバレイでコメントを表示
-    this.transferMessageToHostScript({
-      type: 'SHOW_OVERLAY_COMMENTS',
-      comments: newComments,
-    });
+    this.hostService.showOverlayComments(newComments);
 
     // コメントをビューアへ転送
-    this.transferMessageToViewer({
+    this.sendMessageToViewer({
       type: 'COMMENTS_RECEIVED',
       comments: comments,
     });
@@ -267,24 +255,25 @@ export class HostComponent implements OnInit {
     currentTime: string
   ) {
     console.log('onReceivePlayerCurrentTimeFromHostScript', currentTime);
-    const playerCurrentTimeSeconds = this.timeStringToSeconds(currentTime);
+
+    if (currentTime.match(/^\d+:\d+$/)) {
+      currentTime = `00:${currentTime}`;
+    }
+
+    const playerCurrentTimeSeconds =
+      this.hostService.timeStringToSeconds(currentTime);
 
     if (
       3 <= Math.abs(this.playerCurrentTimeSeconds - playerCurrentTimeSeconds)
     ) {
       // 3秒以上の差があれば、シークしたとみなし、既存のオーバレイ再生済みのコメントをクリア
       this.allComments = {};
+      console.log(
+        'onReceivePlayerCurrentTimeFromHostScript - Resetting allComments'
+      );
     }
 
     this.playerCurrentTimeSeconds = playerCurrentTimeSeconds;
-  }
-
-  /**
-   * ホストスクリプト (アソビステージのページ) に対するメッセージの送信
-   * @param message 送信するメッセージ
-   */
-  protected transferMessageToHostScript(message: any) {
-    window.parent.postMessage(message, '*');
   }
 
   /**
@@ -293,50 +282,16 @@ export class HostComponent implements OnInit {
    */
   protected onReceiveMessageFromViewer(message: string) {}
 
-  generateViewerUrl(hostPeerId: string) {
-    if (
-      0 < document.getElementsByTagName('base').length &&
-      document.getElementsByTagName('base')[0].href
-    ) {
-      return `${
-        document.getElementsByTagName('base')[0].href
-      }viewer/${hostPeerId}`;
-    }
-    return `${window.location.protocol}//${window.location.host}/viewer/${hostPeerId}`;
-  }
-
   /**
    * ビューア (連携中のスマートフォンなど) に対するメッセージの送信
    * @param message 送信するメッセージ
    */
-  protected transferMessageToViewer(message: any) {
+  protected sendMessageToViewer(message: any) {
     if (!this.dataConnection) {
       console.log('transferMessageToViewer', 'Canceled');
       return;
     }
     console.log('transferMessageToViewer', message);
     this.dataConnection.send(encodeURIComponent(JSON.stringify(message)));
-  }
-
-  /**
-   * 時刻または再生位置を秒数へ変換
-   * @param timeString 時刻または再生位置の文字列 (例: '00:01:30')
-   * @returns 秒数 (例: 90)
-   */
-  protected timeStringToSeconds(timeString: string): number {
-    let arr = timeString.split(':');
-    if (arr.length == 3) {
-      return (
-        parseInt(arr[0], 10) * 60 * 60 +
-        parseInt(arr[1], 10) * 60 +
-        parseInt(arr[2], 10)
-      );
-    } else if (arr.length == 2) {
-      return parseInt(arr[0], 10) * 60 + parseInt(arr[1], 10);
-    } else if (arr.length == 1) {
-      return parseInt(arr[0], 10);
-    }
-
-    return null;
   }
 }
