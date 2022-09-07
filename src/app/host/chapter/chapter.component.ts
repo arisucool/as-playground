@@ -54,16 +54,36 @@ export class ChapterComponent implements OnInit, OnDestroy {
     for (const comment of comments) {
       if (!comment.nickname.match(/^\s*♪\s*$/)) continue;
 
-      const matches = comment.comment.match(/^\s*「(.+)」\s*作詞/);
-      if (!matches || comment.comment.match(/収録曲/)) continue;
+      let songName;
+
+      const matchesA = comment.comment.match(
+        /^\s*「.+」.*より\s*「(.+)」\s*作詞/
+      );
+      if (matchesA) {
+        songName = matchesA[1];
+      }
+
+      const matchesB = comment.comment.match(/^\s*「(.+)」\s*作詞/);
+      if (songName === undefined && matchesB) {
+        songName = matchesB[1];
+      }
+
+      if (!songName || comment.comment.match(/収録曲/)) {
+        continue;
+      }
 
       console.log(
         `[ChapterComponent] load - Found chapter comment = `,
         comment
       );
 
+      const exists = this.chapters.find((chapter) => {
+        return chapter.name === songName;
+      });
+      if (exists) continue;
+
       this.chapters.push({
-        name: matches[1],
+        name: songName,
         timeSeconds: comment.receivedTime,
       });
     }
