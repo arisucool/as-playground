@@ -154,15 +154,16 @@ class acasp_HostScript {
       this.toggleBtnElem.addEventListener("click", () => {
         this.toggleIframeVisiblity();
       });
+      this.toggleBtnElem.title = "as-playground を展開/折りたたむ";
       this.toggleBtnElem.innerHTML = "&nbsp;";
-      this.toggleBtnElem.style.background = "rgba(200, 200, 200, 0.4)";
+      this.toggleBtnElem.style.background = "rgba(200, 200, 200, 0.8)";
       this.toggleBtnElem.style.borderRadius = "20px";
       this.toggleBtnElem.style.cursor = "pointer";
       this.toggleBtnElem.style.textAlign = "center";
-      this.toggleBtnElem.style.bottom = "320px";
-      this.toggleBtnElem.style.right = "190px";
+      this.toggleBtnElem.style.bottom = "317px";
+      this.toggleBtnElem.style.right = "180px";
       this.toggleBtnElem.style.position = "fixed";
-      this.toggleBtnElem.style.width = "100px";
+      this.toggleBtnElem.style.width = "120px";
       this.toggleBtnElem.style.height = "12px";
       this.toggleBtnElem.style.zIndex = "9999";
 
@@ -218,10 +219,10 @@ class acasp_HostScript {
   setIframeVisiblity(value) {
     if (value) {
       this.iframeElem.style.display = "block";
-      this.toggleBtnElem.style.bottom = "320px";
+      this.toggleBtnElem.style.bottom = "317px";
     } else {
       this.iframeElem.style.display = "none";
-      this.toggleBtnElem.style.bottom = "-5px";
+      this.toggleBtnElem.style.bottom = "-2px";
     }
   }
 
