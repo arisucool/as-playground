@@ -17,6 +17,7 @@ import { CommentLoaderService } from './comment-loader.service';
   styleUrls: ['./host.component.scss'],
 })
 export class HostComponent implements OnInit {
+  // コメントのスマートフォン連携
   public peer: Peer;
   public peerId: string;
   public viewerUrl: string;
@@ -28,14 +29,18 @@ export class HostComponent implements OnInit {
   // アクティブなタブ
   public activeTabName: 'mobileLink' | 'commentAnalysis' = 'mobileLink';
 
-  // コメント記録用
+  // イベント名
   public eventName: string = null;
-  public latestComments: any[] = [];
-  public isCommentRecorderEnabled = false;
 
-  // コメント再生用
-  public allComments: { [key: string]: Comment } = {};
+  // 映像の再生位置 (例: 90 = '00:01:30')
   public playerCurrentTimeSeconds: number;
+
+  // 受信したすべてのコメント
+  // (ただし、映像をシークしたときは、リセットされる)
+  public allComments: { [key: string]: Comment } = {};
+
+  // 最後に受信したコメント
+  public latestComments: any[] = [];
 
   // 汎用
   public objectKeys = Object.keys;
@@ -44,10 +49,12 @@ export class HostComponent implements OnInit {
     private route: ActivatedRoute,
     private changeDetectorRef: ChangeDetectorRef,
     private commentRecorder: CommentRecorderService,
-    private snackBar: MatSnackBar,
     private dialog: MatDialog
   ) {}
 
+  /**
+   * コンポーネントが初期化されるときに呼び出されるイベントリスナ
+   */
   async ngOnInit() {
     this.loadConfig();
 
@@ -70,17 +77,42 @@ export class HostComponent implements OnInit {
     await this.commentRecorder.connectDb();
   }
 
+  /**
+   * コンポーネントが破棄されるときに呼び出されるイベントリスナ
+   */
   ngOnDestroy(): void {}
 
-  loadConfig(): void {
-    let isCommentRecorderEnabled = window.localStorage.getItem(
-      'host_isCommentRecorderEnabled'
-    );
-    this.isCommentRecorderEnabled =
-      isCommentRecorderEnabled && isCommentRecorderEnabled === 'true';
+  /**
+   * フレームの表示/非表示の設定
+   * @param value 表示する場合はtrue
+   */
+  setIframeVisiblity(value: boolean) {
+    this.transferMessageToHostScript({
+      type: 'SET_IFRAME_VISIBILITY',
+      value: value,
+    });
   }
 
-  initPeer(): void {
+  /**
+   * コメントのインポート/エクスポートダイアログの表示
+   */
+  openCommentBackupDialog() {
+    const dialogRef = this.dialog.open(CommentBackupDialogComponent);
+    dialogRef.afterClosed().subscribe(async (result) => {
+      // TODO:
+    });
+  }
+
+  /**
+   * 設定の読み込み
+   */
+  protected loadConfig(): void {}
+
+  /**
+   * Skyway のための Peer の初期化
+   * (コメントのスマートフォン連携のための待受を開始)
+   */
+  protected initPeer(): void {
     if (this.peer) {
       this.peer = null;
     }
@@ -135,7 +167,10 @@ export class HostComponent implements OnInit {
     });
   }
 
-  startMessagingWithHostScript() {
+  /**
+   * ホストスクリプト (アソビステージのページ) からのメッセージ受信の待受開始
+   */
+  protected startMessagingWithHostScript() {
     window.addEventListener(
       'message',
       (message: MessageEvent) => {
@@ -163,18 +198,12 @@ export class HostComponent implements OnInit {
     );
   }
 
-  setIframeVisiblity(value: boolean) {
-    this.transferMessageToHostScript({
-      type: 'SET_IFRAME_VISIBILITY',
-      value: value,
-    });
-  }
-
-  transferMessageToHostScript(message: any) {
-    window.parent.postMessage(message, '*');
-  }
-
-  async onReceiveCommentsFromHostScript(
+  /**
+   * ホストスクリプト (アソビステージのページ) からコメントを受信したときに呼ばれるイベントリスナ
+   * @param comments 受信したコメント
+   * @param eventName 受信したイベント名
+   */
+  protected async onReceiveCommentsFromHostScript(
     comments: Comment[],
     eventName: string
   ) {
@@ -182,8 +211,9 @@ export class HostComponent implements OnInit {
 
     this.eventName = eventName;
 
+    // 新しいコメントのみを抽出
+    // (コメントの取得は、コメントリストのDOM要素から行なっており、ユーザがコメントリストのスクロールを行うと、重複してコメントが取得される場合があるため。)
     const newComments = [];
-
     for (let comment of comments) {
       if (comment.id in this.allComments) continue;
       this.allComments[comment.id] = comment;
@@ -205,7 +235,13 @@ export class HostComponent implements OnInit {
     });
   }
 
-  async onReceivePlayerCurrentTimeFromHostScript(currentTime: string) {
+  /**
+   * ホストスクリプト (アソビステージのページ) から映像の再生位置を受信したときに呼ばれるイベントリスナ
+   * @param currentTime 受信した再生位置 (例: '00:01:30')
+   */
+  protected async onReceivePlayerCurrentTimeFromHostScript(
+    currentTime: string
+  ) {
     console.log('onReceivePlayerCurrentTimeFromHostScript', currentTime);
     const playerCurrentTimeSeconds = this.timeStringToSeconds(currentTime);
 
@@ -219,23 +255,19 @@ export class HostComponent implements OnInit {
     this.playerCurrentTimeSeconds = playerCurrentTimeSeconds;
   }
 
-  transferMessageToViewer(message: any) {
-    if (!this.dataConnection) {
-      console.log('transferMessageToViewer', 'Canceled');
-      return;
-    }
-    console.log('transferMessageToViewer', message);
-    this.dataConnection.send(encodeURIComponent(JSON.stringify(message)));
+  /**
+   * ホストスクリプト (アソビステージのページ) に対するメッセージの送信
+   * @param message 送信するメッセージ
+   */
+  protected transferMessageToHostScript(message: any) {
+    window.parent.postMessage(message, '*');
   }
 
-  onReceiveMessageFromViewer(message: string) {}
-
-  openCommentBackupDialog() {
-    const dialogRef = this.dialog.open(CommentBackupDialogComponent);
-    dialogRef.afterClosed().subscribe(async (result) => {
-      // TODO:
-    });
-  }
+  /**
+   * ビューア (連携中のスマートフォンなど) からメッセージを受信したときに呼ばれるイベントリスナ
+   * @param message 受信したメッセージ
+   */
+  protected onReceiveMessageFromViewer(message: string) {}
 
   generateViewerUrl(hostPeerId: string) {
     if (
@@ -249,14 +281,24 @@ export class HostComponent implements OnInit {
     return `${window.location.protocol}//${window.location.host}/viewer/${hostPeerId}`;
   }
 
-  setCommentRecorderEnabled(enable: boolean) {
-    this.isCommentRecorderEnabled = enable;
-    window.localStorage.setItem(
-      'host_isCommentRecorderEnabled',
-      enable ? 'true' : 'false'
-    );
+  /**
+   * ビューア (連携中のスマートフォンなど) に対するメッセージの送信
+   * @param message 送信するメッセージ
+   */
+  protected transferMessageToViewer(message: any) {
+    if (!this.dataConnection) {
+      console.log('transferMessageToViewer', 'Canceled');
+      return;
+    }
+    console.log('transferMessageToViewer', message);
+    this.dataConnection.send(encodeURIComponent(JSON.stringify(message)));
   }
 
+  /**
+   * 時刻または再生位置を秒数へ変換
+   * @param timeString 時刻または再生位置の文字列 (例: '00:01:30')
+   * @returns 秒数 (例: 90)
+   */
   protected timeStringToSeconds(timeString: string): number {
     let arr = timeString.split(':');
     if (arr.length == 3) {
