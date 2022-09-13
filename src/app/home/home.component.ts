@@ -10,6 +10,8 @@ export class HomeComponent implements OnInit {
   public bookmarkletRaw: string;
   public bookmarklet: SafeUrl;
 
+  public isOfficialVersion: boolean;
+
   public static BOOKMARKLET = `
   javascript:(function (d,u,s) {
       s=d.createElement('script');
@@ -22,6 +24,12 @@ export class HomeComponent implements OnInit {
   constructor(private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
+    this.isOfficialVersion = window.location.host.match(
+      /^(localhost:4200|arisucool\.github\.io)$/
+    )
+      ? true
+      : false;
+
     let hostScriptUrl = `assets/as-playground-host.js`;
     if (
       0 < document.getElementsByTagName('base').length &&

@@ -1,8 +1,11 @@
 <div class="caption">
-  <h2>as-playground へようこそ</h2>
+  <h2>
+    as-playground
+    <ng-container *ngIf="!isOfficialVersion">(改)</ng-container> へようこそ
+  </h2>
 </div>
 
-<mat-card>
+<mat-card *ngIf="isOfficialVersion">
   <mat-card-title>アソビステージをちょっと便利にする遊び場</mat-card-title>
   <mat-card-content>
     主な機能:
@@ -12,17 +15,20 @@
       <li>コメントのグラフ化</li>
       <li>楽曲コメントからのチャプタ生成</li>
     </ul>
-    <small
-      >今後の実装予定やお知らせなどは、
-      <a href="https://github.com/arisucool/as-playground" target="_blank"
-        >as-playground by arisu.cool 🍓</a
+
+    <ng-container *ngIf="isOfficialVersion">
+      <small
+        >今後の実装予定やお知らせなどは、
+        <a href="https://github.com/arisucool/as-playground" target="_blank"
+          >as-playground by arisu.cool 🍓</a
+        >
+        プロジェクトページ、または
+        <a href="https://twitter.com/arisucool" target="_blank" rel="noopener"
+          >@arisucool</a
+        >
+        をご覧ください</small
       >
-      プロジェクトページ、または
-      <a href="https://twitter.com/arisucool" target="_blank" rel="noopener"
-        >@arisucool</a
-      >
-      をご覧ください</small
-    >
+    </ng-container>
   </mat-card-content>
 </mat-card>
 
@@ -92,12 +98,21 @@
   <mat-card-title>ライセンス・開発について</mat-card-title>
   <mat-card-content>
     <p>
-      このアプリケーションは、
-      <a href="https://github.com/arisucool/as-playground" target="_blank"
-        >as-playground</a
-      >
-      by arisu.cool 🍓
-      プロジェクトをベースとしたオープンソースソフトウェアです。<br />
+      <ng-container *ngIf="isOfficialVersion">
+        このアプリケーションは、
+        <a href="https://github.com/arisucool/as-playground" target="_blank"
+          >as-playground</a
+        >
+        by arisu.cool 🍓
+        プロジェクトにて開発されているオープンソースソフトウェアです。<br />
+      </ng-container>
+      <ng-container *ngIf="!isOfficialVersion">
+        このアプリケーションは、
+        <a href="https://github.com/arisucool/as-playground" target="_blank"
+          >as-playground</a
+        >
+        プロジェクトのオープンソースソフトウェアから派生した、フォーク版です。<br />
+      </ng-container>
 
       サードパーティライセンスについては、<a
         href="3rdpartylicenses.txt"
