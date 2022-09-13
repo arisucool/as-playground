@@ -95,7 +95,9 @@
       </p>
     </div>
 
-    <div *ngIf="peerId && dataConnection">端末が接続されています</div>
+    <div *ngIf="peerId && dataConnection && dataConnection.open">
+      端末が接続されています
+    </div>
   </ng-container>
   <!---->
 

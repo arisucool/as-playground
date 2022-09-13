@@ -1,17 +1,19 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import Peer, { DataConnection } from 'skyway-js';
 import NoSleep from '@uriopass/nosleep.js';
 
 import { environment } from './../../environments/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subscription } from 'rxjs/internal/Subscription';
+import { interval } from 'rxjs/internal/observable/interval';
 
 @Component({
   selector: 'app-viewer',
   templateUrl: './viewer.component.html',
   styleUrls: ['./viewer.component.scss'],
 })
-export class ViewerComponent implements OnInit {
+export class ViewerComponent implements OnInit, OnDestroy {
   public peer: Peer;
   protected peerId: string;
   protected hostPeerId: string;
@@ -22,6 +24,10 @@ export class ViewerComponent implements OnInit {
   public enableNoSleep: boolean = false;
 
   public comments: Comment[] = [];
+
+  // ホストに対してハートビートを定期送信するためのタイマ
+  protected heartbeatTimer: Subscription;
+  protected readonly HEARTBEAT_INTERVAL_MILISECONDS = 4000;
 
   constructor(
     protected route: ActivatedRoute,
@@ -39,6 +45,21 @@ export class ViewerComponent implements OnInit {
     }
 
     this.initPeer();
+
+    // ハートビートの定期送信を行うためのタイマを開始
+    this.heartbeatTimer = interval(
+      this.HEARTBEAT_INTERVAL_MILISECONDS
+    ).subscribe(async () => {
+      this.sendMessageToHost({
+        type: 'HEARTBEAT',
+      });
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.heartbeatTimer) {
+      this.heartbeatTimer.unsubscribe();
+    }
   }
 
   initPeer(): void {
@@ -105,5 +126,18 @@ export class ViewerComponent implements OnInit {
     this.snackBar.open('画面スリープの抑制を解除しました', null, {
       duration: 1000,
     });
+  }
+
+  /**
+   * ホストに対するメッセージの送信
+   * @param message 送信するメッセージ
+   */
+  protected sendMessageToHost(message: any) {
+    if (!this.dataConnection) {
+      console.log('sendMessageToHost', 'Canceled');
+      return;
+    }
+    console.log('sendMessageToHost', message);
+    this.dataConnection.send(encodeURIComponent(JSON.stringify(message)));
   }
 }

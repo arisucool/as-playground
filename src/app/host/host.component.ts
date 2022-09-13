@@ -11,6 +11,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { CommentBackupDialogComponent } from './comment-backup/comment-backup-dialog.component';
 import { CommentLoaderService } from './comment-loader.service';
 import { HostService } from './host.service';
+import { Subscription } from 'rxjs/internal/Subscription';
+import { interval } from 'rxjs/internal/observable/interval';
 
 @Component({
   selector: 'app-host',
@@ -22,7 +24,10 @@ export class HostComponent implements OnInit {
   public peer: Peer;
   public peerId: string;
   public viewerUrl: string;
-  public dataConnection: DataConnection;
+  protected dataConnection: DataConnection;
+  protected viewerConnectionCheckTimer: Subscription;
+  protected viewerHeartbeatReceivedAt: Date;
+  protected readonly HEARTBEAT_DISCONTINUED_THRESHOLD_INTERVAL_MILISECONDS = 10000;
 
   // ページの種別
   public pageType: string;
@@ -78,6 +83,11 @@ export class HostComponent implements OnInit {
     this.startMessagingWithHostScript();
 
     await this.commentRecorder.connectDb();
+
+    // ビューア (連携中のスマートフォンなど) との接続状態を定期確認するためのタイマを開始
+    this.viewerConnectionCheckTimer = interval(1000).subscribe(async () => {
+      this.checkConnectionForViewer();
+    });
   }
 
   /**
@@ -128,6 +138,7 @@ export class HostComponent implements OnInit {
     });
 
     this.peer.on('connection', (dataConnection) => {
+      this.viewerHeartbeatReceivedAt = new Date();
       if (this.dataConnection) {
         console.log('Already connected with other viewer');
         return;
@@ -135,6 +146,8 @@ export class HostComponent implements OnInit {
 
       dataConnection.once('open', () => {
         console.log('Data connection opened.');
+        this.viewerHeartbeatReceivedAt = new Date();
+
         this.sendMessageToViewer({
           type: 'COMMENTS_RECEIVED',
           comments: this.latestComments,
@@ -144,7 +157,8 @@ export class HostComponent implements OnInit {
       });
 
       dataConnection.on('data', (data) => {
-        this.onReceiveMessageFromViewer(data);
+        const parsedData = JSON.parse(decodeURIComponent(data));
+        this.onReceiveMessageFromViewer(parsedData);
       });
 
       dataConnection.once('close', () => {
@@ -295,7 +309,24 @@ export class HostComponent implements OnInit {
    * ビューア (連携中のスマートフォンなど) からメッセージを受信したときに呼ばれるイベントリスナ
    * @param message 受信したメッセージ
    */
-  protected onReceiveMessageFromViewer(message: string) {}
+  protected onReceiveMessageFromViewer(message: any) {
+    if (!message.type) return;
+
+    switch (message.type) {
+      case 'HEARTBEAT':
+        this.viewerHeartbeatReceivedAt = new Date();
+        console.log(
+          'onReceiveMessageFromViewer - Received heartbeat from viewer',
+          this.viewerHeartbeatReceivedAt
+        );
+        break;
+      default:
+        console.warn(
+          'onReceiveMessageFromViewer - Unknown message received...',
+          message
+        );
+    }
+  }
 
   /**
    * ビューア (連携中のスマートフォンなど) に対するメッセージの送信
@@ -308,5 +339,32 @@ export class HostComponent implements OnInit {
     }
     console.log('transferMessageToViewer', message);
     this.dataConnection.send(encodeURIComponent(JSON.stringify(message)));
+  }
+
+  /**
+   * ビューア (連携中のスマートフォンなど) との接続状態の確認
+   */
+  protected checkConnectionForViewer() {
+    const viewerHeartbeatReceivedAt = this.viewerHeartbeatReceivedAt
+      ? this.viewerHeartbeatReceivedAt.getTime()
+      : undefined;
+
+    if (
+      !this.dataConnection ||
+      !this.dataConnection.open ||
+      viewerHeartbeatReceivedAt === undefined
+    ) {
+      this.viewerHeartbeatReceivedAt = undefined;
+      return false;
+    }
+
+    if (
+      this.HEARTBEAT_DISCONTINUED_THRESHOLD_INTERVAL_MILISECONDS <=
+      Date.now() - viewerHeartbeatReceivedAt
+    ) {
+      console.log('checkConnectionForViewer - Detected connection lost');
+      this.dataConnection.close(true);
+      this.dataConnection = undefined;
+    }
   }
 }
