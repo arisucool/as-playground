@@ -6,7 +6,7 @@
 
 ---
 
-## できること
+## 主なできること
 
 - ニコニコ風のコメント表示
 
@@ -27,22 +27,7 @@
   - アソビステージのコメントを本人の別端末 (スマートフォンなど) から閲覧できます。
   - 使用例: テレビやプロジェクタなどの大画面でライブを鑑賞しながら、手元にあるスマートフォンで快適にコメントを閲覧...。
 
----
-
-## 使い方
-
-アソビステージを視聴する端末は、PC ですか？もしくは iPad などのタブレットですか？
-端末に応じて、以下のどちらかのバージョンをご利用ください。
-
-※ 尚、ご利用になられた時点で [ご承諾事項](#terms-of-agreements) に同意いただいたものといたします。
-
-### ブックマークレット版　(iPad や Android タブレットの方)
-
-https://arisucool.github.io/as-playground/
-
-### Chrome 拡張機能版　(PC 向け)
-
-→ [as-playground-chrome-extension](https://github.com/arisucool/as-playground-chrome-extension) (開発中)
+- and more...
 
 ---
 
@@ -58,32 +43,26 @@ https://arisucool.github.io/as-playground/
 
 ---
 
-## Q＆A
+## 使い方
 
-### WebRTC (SkyWay) の使用目的は？
+https://github.com/arisucool/as-playground/wiki/Help-GetStarted
 
-「コメントのスマートフォン連携」で使用しています。
+---
 
-具体的には、本人の端末間でコメントを転送する際、なるべくサーバを介さずに、端末間で完結させるために WebRTC を使用しています。
-また、SkyWay を利用しているのは開発工数を下げるためです。
+## FAQ (トラブルシューティング・技術的な質問など)
 
-※アソビステージの映像や音声は一切扱っていません。今後も扱いません！
+https://github.com/arisucool/as-playground/wiki/Help-FAQ
 
-### 荒らし対策・踏み台対策はありますか？
+---
 
-アソビステージを閲覧している各端末 (PC など) に対し、別端末 (スマートフォンなど) を 1 台までしか連携できません。
-また他者から推測困難なランダムなトークンによって接続します。
+## お知らせ
 
-### ブックマークレットにしている理由は？
-
-メイン端末 (アソビステージを閲覧する端末) として、PC だけでなく、iPad や iOS なども使用できるようにするためです。
-
-例えば、iPadOS の Google Chrome でライブ鑑賞しながら、iPhone でコメントを閲覧することができます。
+https://github.com/arisucool/as-playground/wiki/Help-News
 
 ---
 
 ## 開発について
 
-[Wiki](https://github.com/arisucool/as-playground/wiki/dev-getstarted) をご覧ください。
+→ https://github.com/arisucool/as-playground/wiki/Dev-GetStarted
 
-※アソビステージの映像や音声は一切扱いません。またアソビステージの規約に抵触する行為は一切行いません。もし万が一、そのような Pull Request を提出いただいても、拒否をいたします。
+※アソビステージの規約に抵触する行為は一切行いません。もし万が一、そのような Pull Request を提出いただいても、拒否をいたします。
