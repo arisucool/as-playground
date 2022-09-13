@@ -13,7 +13,27 @@
   </p>
 </ng-container>
 
-<ng-container *ngIf="chartData !== undefined">
+<ng-container
+  *ngIf="
+    chartData !== undefined &&
+    1 <= chartData.length &&
+    chartData[0].series.length <= 2
+  "
+>
+  <p>
+    コメントデータが少ないです
+    <br />
+    数分以上、動画を再生し続けてください
+  </p>
+</ng-container>
+
+<ng-container
+  *ngIf="
+    chartData !== undefined &&
+    1 <= chartData.length &&
+    3 <= chartData[0].series.length
+  "
+>
   <div class="chart-container">
     <ngx-charts-line-chart
       [view]="[440, 230]"
