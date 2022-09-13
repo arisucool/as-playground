@@ -102,8 +102,8 @@ export class ChapterComponent implements OnInit, OnDestroy {
       // チャプタを作成
       const chapter: Chapter = {
         name: songName,
-        timeSeconds: comment.receivedTime,
-        seekTimeSeconds: comment.receivedTime + 0,
+        timeSeconds: comment.timeSeconds,
+        seekTimeSeconds: comment.timeSeconds + 0,
       };
 
       // チャプタを追加

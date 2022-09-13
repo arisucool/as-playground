@@ -32,23 +32,23 @@ export class CommentLoaderService {
     this.timerId = null;
   }
 
-  async getCommentsByEventNameAndReceivedDate(
+  async getCommentsByEventNameAndregisteredDate(
     eventName: string,
-    receivedDate: number
+    registeredDate: number
   ): Promise<Comment[]> {
     /*if (!this.events[eventName]) {
       this.events[eventName] = {
-        currentCommentDate: receivedDate,
+        currentCommentDate: registeredDate,
         comments: [],
       };
       await this.tick();
     }
 
-    this.events[eventName].currentCommentDate = receivedDate;
+    this.events[eventName].currentCommentDate = registeredDate;
 
     return this.events[eventName].comments.filter((comment) => {
-      const t = comment.receivedDate.getTime();
-      return receivedDate <= t && t <= receivedDate + 999;
+      const t = comment.registeredDate.getTime();
+      return registeredDate <= t && t <= registeredDate + 999;
     });*/
     return [];
   }

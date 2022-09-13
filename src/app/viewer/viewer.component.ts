@@ -21,13 +21,7 @@ export class ViewerComponent implements OnInit {
   protected noSleep: NoSleep;
   public enableNoSleep: boolean = false;
 
-  public comments: {
-    id: string;
-    nickname: string;
-    nicknameColor: string;
-    comment: string;
-    receivedDate: Date;
-  }[] = [];
+  public comments: Comment[] = [];
 
   constructor(
     protected route: ActivatedRoute,

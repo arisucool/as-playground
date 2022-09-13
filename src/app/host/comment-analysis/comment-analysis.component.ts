@@ -53,24 +53,23 @@ export class CommentAnalysisComponent implements OnInit, OnDestroy {
 
     const commentsSorted: any[] = comments
       .map((comment: any) => {
-        if (comment.receivedTime === undefined) return comment;
-        comment.receivedTimeMinutes =
-          Math.floor(comment.receivedTime / 60) * 60;
+        if (comment.timeSeconds === undefined) return comment;
+        comment.timeMinutes = Math.floor(comment.timeSeconds / 60) * 60;
         return comment;
       })
-      .filter((comment: any) => comment.receivedTimeMinutes !== undefined)
+      .filter((comment: any) => comment.timeMinutes !== undefined)
       .sort((a: any, b: any) => {
-        return a.receivedTimeMinutes - b.receivedTimeMinutes;
+        return a.timeMinutes - b.timeMinutes;
       });
     comments = [];
 
     const chartSeries = [];
     let tmpSeries = undefined;
     for (const comment of commentsSorted) {
-      if (comment.receivedTimeMinutes === undefined) continue;
+      if (comment.timeMinutes === undefined) continue;
 
       const timeStr = `${this.hostService.secondToTimeString(
-        comment.receivedTimeMinutes
+        comment.timeMinutes
       )}`;
 
       if (tmpSeries && tmpSeries.name != timeStr) {

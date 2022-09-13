@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as JsStore from 'jsstore';
 import { DataStoreService } from './data-store/data-store.service';
 import { Comment } from './model/comment.interface';
+import sha256 from 'crypto-js/sha256';
 
 @Injectable({
   providedIn: 'root',
@@ -47,31 +48,31 @@ export class CommentRecorderService {
       from: 'Comments',
       where: { eventName: eventName },
       order: {
-        by: 'receivedTime',
+        by: 'timeSeconds',
         type: 'asc',
       },
     });
   }
 
-  async getCommentsByEventNameAndReceivedTimeRange(
+  async getCommentsByEventNameAndTimeSecondsRange(
     eventName: string,
-    receivedTimeStart: number,
-    receivedTimeEnd: number
+    timeSecondsStart: number,
+    timeSecondsEnd: number
   ): Promise<Comment[]> {
     await this.connectDb();
     return await this.dbConnection.select<Comment>({
       from: 'Comments',
       where: {
         eventName: eventName,
-        receivedTime: {
+        timeSeconds: {
           '-': {
-            low: receivedTimeStart,
-            high: receivedTimeEnd,
+            low: timeSecondsStart,
+            high: timeSecondsEnd,
           },
         },
       },
       order: {
-        by: 'receivedTime',
+        by: 'timeSeconds',
         type: 'asc',
       },
     });
@@ -100,5 +101,9 @@ export class CommentRecorderService {
       from: 'Comments',
       where: { eventName: eventName },
     });
+  }
+
+  getId(eventName: string, nickName: string, commentText: string): string {
+    return sha256(`${eventName}___${nickName}___${commentText}`).toString();
   }
 }

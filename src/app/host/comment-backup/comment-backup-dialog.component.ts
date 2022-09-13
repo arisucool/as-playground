@@ -83,8 +83,8 @@ export class CommentBackupDialogComponent implements OnInit {
 
     let numOfItems = 0;
     for (const comment of data.comments) {
-      if (typeof comment.receivedDate == 'number') {
-        comment.receivedDate = new Date(comment.receivedDate);
+      if (typeof comment.registeredDate == 'number') {
+        comment.registeredDate = new Date(comment.registeredDate);
       }
       await this.commentRecorder.registerComment(data.eventName, comment);
       numOfItems++;

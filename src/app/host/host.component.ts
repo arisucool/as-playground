@@ -217,13 +217,20 @@ export class HostComponent implements OnInit {
     // (コメントの取得は、コメントリストのDOM要素から行なっており、ユーザがコメントリストのスクロールを行うと、重複してコメントが取得される場合があるため。)
     const newComments = [];
     for (let comment of comments) {
+      // コメントのIDを生成
+      comment.id = this.commentRecorder.getId(
+        eventName,
+        comment.nickname,
+        comment.comment
+      );
+
       if (comment.id in this.allComments) {
         // すでに同じコメントを受信済みならばスキップ
         continue;
       }
 
-      // コメントの時刻を設定
-      comment.receivedTime = playerCurrentTimeSeconds;
+      // コメントの再生位置 (秒数) を設定
+      comment.timeSeconds = playerCurrentTimeSeconds;
 
       // コメントを配列へ追加
       this.allComments[comment.id] = comment;

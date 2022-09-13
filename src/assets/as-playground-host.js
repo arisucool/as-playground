@@ -258,9 +258,17 @@ class acasp_HostScript {
       if (comments.length <= 0) return;
 
       const d = new Date();
-      let eventName =
-        document.title.replace(/ \| ASOBISTAGE \| アソビストア/g, "") +
-        ` (${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()})`;
+      let eventName = document.title.replace(
+        / \| ASOBISTAGE \| アソビストア/g,
+        ""
+      );
+
+      let pathMatches = window.location.pathname.match(
+        /\/([a-zA-Z0-9_]+)\/{0,1}$/
+      );
+      if (pathMatches) {
+        eventName += " " + pathMatches[1];
+      }
 
       this.iframeElem.contentWindow.postMessage(
         {
@@ -334,15 +342,11 @@ class acasp_HostScript {
         ? nicknameElem.style.color
         : "#000000";
 
-      let commentId =
-        btoa(encodeURIComponent(nickname)) + btoa(encodeURIComponent(comment));
-
       comments.push({
-        id: commentId,
         nickname: nickname,
         nicknameColor: nicknameColor,
         comment: comment,
-        receivedDate: new Date(),
+        registeredDate: new Date(),
       });
     }
 
