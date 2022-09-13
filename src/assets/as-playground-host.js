@@ -253,7 +253,7 @@ class acasp_HostScript {
     this.stopCommentWatching();
 
     this.commentWatchingTimerId = window.setInterval(() => {
-      let playerCurrentTimeSeconds = this.getPlayerCurrentTime();
+      let currentTimeSeconds = this.getPlayerCurrentTime();
       let comments = this.getComments();
       if (comments.length <= 0) return;
 
@@ -275,7 +275,7 @@ class acasp_HostScript {
           type: "COMMENTS_RECEIVED",
           eventName: eventName,
           comments: comments,
-          playerCurrentTimeSeconds: playerCurrentTimeSeconds,
+          currentTimeSeconds: currentTimeSeconds,
         },
         "*"
       );
