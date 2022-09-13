@@ -10,7 +10,7 @@ class acasp_HostScript {
     this.iframeElem = null;
     this.commentWatchingTimerId = null;
     this.playerCurrentTimeWatchingTimerId = null;
-    this.playerCurrentTime = "";
+    this.playerCurrentTimeSeconds = "";
     this.overlayCommentsElem = null;
 
     // コメント一覧の要素を取得
@@ -253,7 +253,7 @@ class acasp_HostScript {
     this.stopCommentWatching();
 
     this.commentWatchingTimerId = window.setInterval(() => {
-      let playerCurrentTime = this.getPlayerCurrentTime();
+      let playerCurrentTimeSeconds = this.getPlayerCurrentTime();
       let comments = this.getComments();
       if (comments.length <= 0) return;
 
@@ -275,7 +275,7 @@ class acasp_HostScript {
           type: "COMMENTS_RECEIVED",
           eventName: eventName,
           comments: comments,
-          playerCurrentTime: playerCurrentTime,
+          playerCurrentTimeSeconds: playerCurrentTimeSeconds,
         },
         "*"
       );
@@ -288,16 +288,19 @@ class acasp_HostScript {
     this.stopPlayerCurrentTimeWatching();
 
     this.playerCurrentTimeWatchingTimerId = window.setInterval(() => {
-      const currentTime = this.getPlayerCurrentTime();
-      if (!currentTime || currentTime == this.playerCurrentTime) {
+      const currentTimeSeconds = this.getPlayerCurrentTime();
+      if (
+        !currentTimeSeconds ||
+        currentTimeSeconds == this.playerCurrentTimeSeconds
+      ) {
         return;
       }
 
-      this.playerCurrentTime = currentTime;
+      this.playerCurrentTimeSeconds = currentTimeSeconds;
       this.iframeElem.contentWindow.postMessage(
         {
           type: "PLAYER_CURRENT_TIME_CHANGED",
-          currentTime: currentTime,
+          currentTimeSeconds: currentTimeSeconds,
         },
         "*"
       );
@@ -355,10 +358,7 @@ class acasp_HostScript {
 
   getPlayerCurrentTime() {
     if (!this.playerElem) return;
-
-    const elem = document.querySelector(".vjs-current-time-display");
-
-    return elem.innerText.replace(/\s/g, "");
+    return this.playerElem.currentTime;
   }
 
   setPlayerCurrentTime(seconds) {

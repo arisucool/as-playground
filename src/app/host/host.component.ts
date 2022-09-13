@@ -9,7 +9,6 @@ import { Comment } from './model/comment.interface';
 import { CommentRecorderService } from './comment-recorder.service';
 import { MatDialog } from '@angular/material/dialog';
 import { CommentBackupDialogComponent } from './comment-backup/comment-backup-dialog.component';
-import { CommentLoaderService } from './comment-loader.service';
 import { HostService } from './host.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { interval } from 'rxjs/internal/observable/interval';
@@ -185,12 +184,12 @@ export class HostComponent implements OnInit {
             this.onReceiveCommentsFromHostScript(
               message.data.comments,
               message.data.eventName,
-              message.data.playerCurrentTime
+              message.data.currentTimeSeconds
             );
             break;
           case 'PLAYER_CURRENT_TIME_CHANGED':
             this.onReceivePlayerCurrentTimeFromHostScript(
-              message.data.currentTime
+              message.data.currentTimeSeconds
             );
             break;
           default:
@@ -209,23 +208,19 @@ export class HostComponent implements OnInit {
    * ホストスクリプト (アソビステージのページ) からコメントを受信したときに呼ばれるイベントリスナ
    * @param comments 受信したコメント
    * @param eventName 受信したイベント名
-   * @param currentTime 受信した再生位置 (例: '00:01:30')
+   * @param currentTimeSeconds 受信した再生位置
    */
   protected async onReceiveCommentsFromHostScript(
     comments: Comment[],
     eventName: string,
-    currentTime: string
+    currentTimeSeconds: number
   ) {
     if (this.eventName !== eventName) {
       console.log('onReceiveCommentsFromHostScript - eventName = ', eventName);
       this.eventName = eventName;
     }
 
-    if (currentTime.match(/^\d+:\d+$/)) {
-      currentTime = `00:${currentTime}`;
-    }
-    const playerCurrentTimeSeconds =
-      this.hostService.timeStringToSeconds(currentTime);
+    currentTimeSeconds = Math.floor(currentTimeSeconds);
 
     // 新しいコメントのみを抽出
     // (コメントの取得は、コメントリストのDOM要素から行なっており、ユーザがコメントリストのスクロールを行うと、重複してコメントが取得される場合があるため。)
@@ -244,7 +239,7 @@ export class HostComponent implements OnInit {
       }
 
       // コメントの再生位置 (秒数) を設定
-      comment.timeSeconds = playerCurrentTimeSeconds;
+      comment.timeSeconds = currentTimeSeconds;
 
       // コメントを配列へ追加
       this.allComments[comment.id] = comment;
@@ -282,19 +277,12 @@ export class HostComponent implements OnInit {
    * @param currentTime 受信した再生位置 (例: '00:01:30')
    */
   protected async onReceivePlayerCurrentTimeFromHostScript(
-    currentTime: string
+    currentTimeSeconds: number
   ) {
-    console.log('onReceivePlayerCurrentTimeFromHostScript', currentTime);
+    currentTimeSeconds = Math.floor(currentTimeSeconds);
+    console.log('onReceivePlayerCurrentTimeFromHostScript', currentTimeSeconds);
 
-    if (currentTime.match(/^\d+:\d+$/)) {
-      currentTime = `00:${currentTime}`;
-    }
-    const playerCurrentTimeSeconds =
-      this.hostService.timeStringToSeconds(currentTime);
-
-    if (
-      3 <= Math.abs(this.playerCurrentTimeSeconds - playerCurrentTimeSeconds)
-    ) {
+    if (3 <= Math.abs(this.playerCurrentTimeSeconds - currentTimeSeconds)) {
       // 3秒以上の差があれば、シークしたとみなし、既存のオーバレイ再生済みのコメントをクリア
       this.allComments = {};
       console.log(
@@ -302,7 +290,7 @@ export class HostComponent implements OnInit {
       );
     }
 
-    this.playerCurrentTimeSeconds = playerCurrentTimeSeconds;
+    this.playerCurrentTimeSeconds = currentTimeSeconds;
   }
 
   /**
