@@ -108,7 +108,7 @@ export class ViewerComponent implements OnInit, OnDestroy {
   }
 
   onReceivedNewComment(receivedComments: Comment[]) {
-    let comments = this.comments.concat(receivedComments);
+    let comments = this.comments.concat(receivedComments.reverse());
     while (this.NUM_OF_MAX_COMMENTS < comments.length) {
       comments.shift();
     }
