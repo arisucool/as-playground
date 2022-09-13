@@ -24,6 +24,7 @@ export class ViewerComponent implements OnInit, OnDestroy {
   public enableNoSleep: boolean = false;
 
   public comments: Comment[] = [];
+  protected readonly NUM_OF_MAX_COMMENTS = 500;
 
   // ホストに対してハートビートを定期送信するためのタイマ
   protected heartbeatTimer: Subscription;
@@ -106,8 +107,13 @@ export class ViewerComponent implements OnInit, OnDestroy {
     });
   }
 
-  onReceivedNewComment(comments: any) {
-    this.comments = this.comments.concat(comments);
+  onReceivedNewComment(receivedComments: Comment[]) {
+    let comments = this.comments.concat(receivedComments);
+    while (this.NUM_OF_MAX_COMMENTS < comments.length) {
+      comments.shift();
+    }
+    this.comments = comments;
+
     this.changeDetectorRef.detectChanges();
   }
 
