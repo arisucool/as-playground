@@ -28,7 +28,7 @@
   <p *ngIf="errorText">エラー: {{ errorText }}</p>
 </div>
 
-<mat-list>
+<mat-list class="comments">
   <mat-list-item *ngFor="let comment of comments.slice().reverse()">
     <h3 matLine [style.color]="comment.nicknameColor">
       {{ comment.nickname }}

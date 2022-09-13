@@ -1,4 +1,16 @@
+$background-color: #141414;
+$text-color: #eeeeee;
+
+::ng-deep body {
+  background-color: $background-color;
+}
+
+::ng-deep mat-toolbar.mat-toolbar {
+  background-color: lighten($background-color, 4%);
+}
+
 .toolbar {
+  color: #fefefe;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -12,5 +24,19 @@
 @media (max-width: 599px) {
   .toolbar {
     height: 56px;
+  }
+}
+
+.status {
+  color: $text-color;
+}
+
+.comments {
+  color: $text-color;
+}
+
+.comments {
+  mat-list-item {
+    color: $text-color;
   }
 }
