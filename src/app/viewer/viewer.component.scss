@@ -1,42 +1,90 @@
-$background-color: #141414;
-$text-color: #eeeeee;
+// 全体
 
 ::ng-deep body {
-  background-color: $background-color;
+  background: #424242;
 }
 
-::ng-deep mat-toolbar.mat-toolbar {
-  background-color: lighten($background-color, 4%);
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.toolbar {
-  color: #fefefe;
+:host {
+  color: #fafafa;
+}
+
+// ヘッダ
+
+::ng-deep mat-toolbar {
+  position: fixed;
+  top: 0px;
+  z-index: 100;
+}
+
+.toolbar-override {
   display: flex;
+  position: fixed;
   flex-direction: row;
   align-items: center;
   white-space: nowrap;
-  top: 0px;
   right: 1rem;
-  position: absolute;
+  top: 0;
   height: 64px;
+  z-index: 110;
 }
 
 @media (max-width: 599px) {
-  .toolbar {
+  .toolbar-override {
     height: 56px;
   }
 }
 
+// コンテンツ
+
+::ng-deep .app-content {
+  min-height: calc(100vh - 64px);
+  position: relative;
+  top: 64px;
+  padding-bottom: 1rem;
+}
+
+// ステータス表示
+
 .status {
-  color: $text-color;
+  display: block;
+  text-align: center;
+
+  mat-icon {
+    font-size: 2.4rem;
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  p {
+    font-size: 1.2rem;
+  }
+
+  p.detail {
+    font-size: 0.8rem;
+  }
+}
+
+// コメント一覧
+
+.comments {
+  //color: $text-color;
 }
 
 .comments {
-  color: $text-color;
-}
+  padding-bottom: 4rem;
 
-.comments {
   mat-list-item {
-    color: $text-color;
+    background: #131313dd;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
   }
 }

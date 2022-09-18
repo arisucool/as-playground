@@ -1,4 +1,7 @@
-<header>
+<header
+  class="my-light-theme"
+  [ngClass]="{ 'app-dark-theme': theme === 'dark' }"
+>
   <mat-toolbar>
     <p class="app-icon-container" matTooltip="as-playground">
       <img class="app-icon" src="assets/icon.png" />
@@ -6,6 +9,6 @@
   </mat-toolbar>
 </header>
 
-<div class="app-content">
+<div class="app-content" [ngClass]="{ 'app-dark-theme': theme === 'dark' }">
   <router-outlet></router-outlet>
 </div>

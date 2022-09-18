@@ -6,5 +6,12 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
+  theme: 'light' | 'dark' = 'light';
   title = 'as-playground';
+
+  ngOnInit() {
+    if (window.location.pathname.match(/\/viewer/)) {
+      this.theme = 'dark';
+    }
+  }
 }

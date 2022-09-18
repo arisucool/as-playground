@@ -1,4 +1,4 @@
-<div class="toolbar">
+<div class="toolbar-override">
   <button
     (click)="setNoSleep(true)"
     *ngIf="!enableNoSleep"
@@ -19,22 +19,39 @@
   </button>
 </div>
 
-<div class="status">
-  <p *ngIf="!errorText && !peer">初期化中...</p>
-  <p *ngIf="!errorText && peer && !dataConnection">ホストへ接続しています...</p>
-  <p *ngIf="!errorText && peer && dataConnection && comments.length == 0">
-    新着コメントを待機しています...
-  </p>
-  <p *ngIf="errorText">エラー: {{ errorText }}</p>
-</div>
+<div class="content">
+  <div class="status">
+    <ng-container *ngIf="!errorText && !peer">
+      <p>初期化中...</p>
+    </ng-container>
+    <ng-container *ngIf="!errorText && peer && !dataConnection">
+      <p>ホストへ接続しています...</p>
+    </ng-container>
+    <ng-container
+      *ngIf="!errorText && peer && dataConnection && comments.length == 0"
+    >
+      <p>新着コメントを待機しています...</p>
+    </ng-container>
+    <ng-container *ngIf="errorText">
+      <p>
+        <mat-icon style="color: #f1c40f">warning</mat-icon>
+      </p>
+      <p>エラー</p>
+      <p class="detail">
+        {{ errorText }}
+      </p>
+    </ng-container>
+  </div>
 
-<mat-list class="comments">
-  <mat-list-item *ngFor="let comment of comments.slice().reverse()">
-    <h3 matLine [style.color]="comment.nicknameColor">
-      {{ comment.nickname }}
-    </h3>
-    <p matLine>
-      <span> {{ comment.comment }} </span>
-    </p>
-  </mat-list-item>
-</mat-list>
+  <mat-list class="comments">
+    <mat-list-item *ngFor="let comment of comments.slice().reverse()">
+      <h3 matLine [style.color]="comment.nicknameColor">
+        {{ comment.nickname }}
+      </h3>
+      <p matLine>
+        <span> {{ comment.comment }} </span>
+      </p>
+    </mat-list-item>
+  </mat-list>
+
+</div>
