@@ -37,6 +37,9 @@ export class HostComponent implements OnInit {
   public activeTabName: 'mobileLink' | 'commentAnalysis' | 'chapter' =
     'mobileLink';
 
+  // ローダー
+  public loader: 'chrome_ext' | 'bookmarklet';
+
   // イベント名
   public eventName: string = null;
 
@@ -63,6 +66,7 @@ export class HostComponent implements OnInit {
     private changeDetectorRef: ChangeDetectorRef,
     private commentRecorder: CommentRecorderService,
     private dialog: MatDialog,
+    private snackBar: MatSnackBar,
     private hostService: HostService
   ) {}
 
@@ -85,6 +89,9 @@ export class HostComponent implements OnInit {
       default:
         this.pageType = 'UNKNOWN';
     }
+
+    // ローダーを識別
+    this.loader = queryParams.loader;
 
     // 利用可能な機能を設定
     const availableFunctions = queryParams.availableFunctions
@@ -184,6 +191,8 @@ export class HostComponent implements OnInit {
               message.data.currentTimeSeconds
             );
             break;
+          case 'ERROR_OCCURRED_ON_HOST_SCRIPT':
+            this.onReceiveErrorFromHostScript(message.data.errorMessage);
           default:
             console.warn(
               'startMessagingWithHostScript',
@@ -285,6 +294,17 @@ export class HostComponent implements OnInit {
     this.playerCurrentTimeSeconds = currentTimeSeconds;
   }
 
+  protected onReceiveErrorFromHostScript(errorMessage: string) {
+    this.snackBar.open(`エラー: ${errorMessage}`, undefined, {
+      duration: 5000,
+    });
+
+    this.sendMessageToViewer({
+      type: 'ERROR_OCCURRED',
+      errorMessage: errorMessage,
+    });
+  }
+
   /**
    * ビューア (連携中のスマートフォンなど) から接続されたときに呼ばれるイベントリスナ
    * @param dataConnection メッセージを送受信するためのデータコネクション
@@ -310,6 +330,7 @@ export class HostComponent implements OnInit {
         type: 'GREETING',
         comments: this.latestComments,
         availableFunctions: this.availableFunctions,
+        hostLoader: this.loader,
       });
 
       // as-playground を折りたたむ

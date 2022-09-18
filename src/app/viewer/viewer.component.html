@@ -87,13 +87,24 @@
       class="message-unavailable-post-comment"
       *ngIf="!availableFunctions.postComment"
     >
-      <p>コメント投稿は現在利用できません</p>
-      <button
-        (click)="showCommentPostUnavailableDetailMessage()"
-        mat-icon-button
-      >
-        <mat-icon>help_outline</mat-icon>
-      </button>
+      <ng-container *ngIf="hostLoader && hostLoader === 'chrome_ext'">
+        <p>コメント投稿は現在利用できません</p>
+        <button
+          (click)="showCommentPostUnavailableDetailMessage()"
+          mat-icon-button
+        >
+          <mat-icon>help_outline</mat-icon>
+        </button>
+      </ng-container>
+      <ng-container *ngIf="hostLoader && hostLoader === 'bookmarklet'">
+        <p>コメント投稿は利用できません</p>
+        <button
+          (click)="showCommentPostUnavailableDetailMessage()"
+          mat-icon-button
+        >
+          <mat-icon>help_outline</mat-icon>
+        </button>
+      </ng-container>
     </div>
     <!---->
   </form>

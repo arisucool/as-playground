@@ -33,6 +33,9 @@ export class ViewerComponent implements OnInit, OnDestroy {
   protected heartbeatTimer: Subscription;
   protected readonly HEARTBEAT_INTERVAL_MILISECONDS = 4000;
 
+  // ホスト環境
+  public hostLoader: 'chrome_ext' | 'bookmarklet';
+
   // 利用機能な機能
   public availableFunctions: HostAvailableFunctions = {
     postComment: false,
@@ -109,8 +112,12 @@ export class ViewerComponent implements OnInit, OnDestroy {
         switch (message.type) {
           case 'GREETING':
             this.availableFunctions = message.availableFunctions;
+            this.hostLoader = message.hostLoader;
           case 'COMMENTS_RECEIVED':
             this.onReceivedNewComment(message.comments);
+            break;
+          case 'ERROR_OCCURRED':
+            this.snackBar.open(message.errorMessage, 'OK');
             break;
           default:
             break;
@@ -153,6 +160,25 @@ export class ViewerComponent implements OnInit, OnDestroy {
   }
 
   showCommentPostUnavailableDetailMessage() {
+    if (this.hostLoader === 'bookmarklet') {
+      const message = this.snackBar.open(
+        'as-playground のブックマークレット版では、スマホからのコメント投稿機能を利用いただけません。代わりに、Chrome 拡張機能版をご利用ください。',
+        '詳細',
+        {
+          duration: 3000,
+        }
+      );
+      message
+        .onAction()
+        .toPromise()
+        .then(() => {
+          window.open(
+            'https://github.com/arisucool/as-playground-chrome-extension'
+          );
+        });
+      return false;
+    }
+
     this.snackBar.open(
       'アソビステージでコメント投稿できない画面が開かれているか、またはアソビステージの仕様変更が行われました。このため、as-playground からのコメント投稿は利用できません。',
       'OK'

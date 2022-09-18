@@ -19,7 +19,7 @@ class acasp_HostScript {
     this.commentListElem = undefined;
 
     this.commentPostWsUrl = undefined;
-    this.commentPostBnid = undefined;
+    this.commentPostRandomBnid = undefined;
 
     // コメント一覧の要素を取得
     this.commentViewerElem = document.body.querySelector(
@@ -61,10 +61,16 @@ class acasp_HostScript {
         if (!message.data || !message.data.type) return;
 
         if (message.origin.indexOf(this.getOwnBaseUrl()) == -1) {
-          console.log("Message received from other frame", message);
+          console.log(
+            "[acasp_HostScript] Message received from other frame",
+            message
+          );
+        } else {
+          console.log(
+            "[acasp_HostScript] Message received from iframe",
+            message
+          );
         }
-
-        console.log("Message received from iframe", message);
 
         if (message.data.type == "SET_IFRAME_VISIBILITY") {
           this.setIframeVisiblity(message.data.value);
@@ -75,14 +81,22 @@ class acasp_HostScript {
         } else if (message.data.type === "SET_PLAYER_CURRENT_TIME") {
           this.setPlayerCurrentTime(message.data.seconds);
         } else if (message.data.type === "POST_COMMENT") {
-          this.postComment(message.data.nickname, message.data.comment);
+          this.postComment(message.data.comment);
+        } else if (message.data.type === "WS_MESSAGE_RECEIVED") {
+          // WebSocketHook 経由で WebSocket のメッセージを受信したとき
+          this.onWsMessageReceivedFromWebSocketHook(
+            message.data.wsOrigin,
+            message.data.wsMessage
+          );
         }
       },
       false
     );
 
     // コメント投稿を行うための接続先URLを取得
-    this.commentPostWsUrl = await this.getCommentPostWsUrl();
+    if (this.loader === "chrome_ext") {
+      this.commentPostWsUrl = await this.getCommentPostWsUrl();
+    }
 
     // アプリケーションフレームを読み込み
     await this.loadIframe();
@@ -160,7 +174,9 @@ class acasp_HostScript {
       };
       this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}&pageType=${
         this.pageType
-      }&availableFunctions=${availableFunctions.join(",")}`;
+      }&availableFunctions=${availableFunctions.join(",")}&loader=${
+        this.loader
+      }`;
       this.iframeElem.style.bottom = "0px";
       this.iframeElem.style.right = "0px";
       this.iframeElem.style.position = "fixed";
@@ -383,78 +399,54 @@ class acasp_HostScript {
     this.playerElem.currentTime = seconds;
   }
 
-  async postComment(nickname, comment) {
-    return new Promise((resolve, reject) => {
-      if (
-        nickname === undefined ||
-        nickname.length === 0 ||
-        comment === undefined ||
-        comment.length === 0
-      ) {
-        return reject("Invalid property");
+  postComment(comment) {
+    new Promise((resolve, reject) => {
+      if (comment === undefined || comment.length === 0) {
+        return reject("コメントが入力されていません");
       } else if (!this.commentPostWsUrl) {
-        return reject("commentPostWsUrl is empty");
+        return reject("コメント投稿先が取得できません");
+      }
+
+      const prevCommentUserName = window.localStorage.getItem(
+        "acaspCommentUserName"
+      );
+      const prevCommentColor = window.localStorage.getItem("acaspCommentColor");
+      const prevCommentBnid = window.localStorage.getItem("acaspCommentBnid");
+      if (
+        prevCommentUserName === null ||
+        prevCommentColor === null ||
+        prevCommentUserName.length === 0 ||
+        prevCommentColor.length === 0
+      ) {
+        return reject("一度、アソビステージ上でコメントを直接投稿してください");
       }
 
       const commentPostMessage = {
         type: "user/send-comment",
         userName: nickname,
         comment: comment,
-        bnid: this.commentPostBnid,
-        color: this.getCommentPostColor(nickname),
+        bnid: prevCommentBnid || this.commentPostRandomBnid,
+        color: prevCommentColor,
       };
       console.log(
         `[acasp_HostScript] postComment - Comment = `,
         commentPostMessage
       );
 
-      const ws = new WebSocket(this.commentPostWsUrl);
-      let isReceivedMessage = false;
+      this.sendWsMessageOnWebSocketHook(
+        this.commentPostWsUrl,
+        JSON.stringify(commentPostMessage)
+      );
 
-      ws.onopen = () => {
-        console.log(
-          `[acasp_HostScript] postComment - Connection with comment server opened`
-        );
-      };
-
-      ws.onmessage = (message) => {
-        console.log(
-          `[acasp_HostScript] postComment - Message received from comment server`,
-          message
-        );
-        if (isReceivedMessage) return;
-
-        isReceivedMessage = true;
-
-        console.log(
-          `[acasp_HostScript] postComment - Sending comment... `,
-          commentPostMessage
-        );
-        setTimeout(() => {
-          //ws.send(JSON.stringify(commentPostMessage));
-          console.log(`[acasp_HostScript] postComment - Done`);
-          ws.close();
-          resolve();
-        }, 1000);
-      };
-
-      ws.onerror = (error) => {
-        try {
-          ws.close();
-        } catch (e) {
-          console.log(
-            `[acasp_HostScript] postComment - Connection error occurred`,
-            e
-          );
-        }
-        reject(error);
-      };
-
-      ws.onclose = () => {
-        console.log(
-          `[acasp_HostScript] postComment - Connection with comment server closed`
-        );
-      };
+      resolve();
+    }).catch((e) => {
+      this.iframeElem.contentWindow.postMessage(
+        {
+          type: "ERROR_OCCURRED_ON_HOST_SCRIPT",
+          errorMessage: e.toString(),
+        },
+        "*"
+      );
     });
   }
 
@@ -559,7 +551,7 @@ class acasp_HostScript {
       eventInfoApiKey
     );
 
-    const eventPageKey = undefined; // TODO: イベントのURLを入力
+    const eventPageKey = ""; // TODO: イベントのURLを入力
     if (!eventPageKey) {
       console.error(
         `[acasp_HostScript] getCommentPostWsUrl - DENIED!! because could not get eventPageKey`
@@ -596,7 +588,14 @@ class acasp_HostScript {
     let commentWsUrl = commentUrls[0].url;
 
     // コメント投稿のための bnid の設定
-    this.commentPostBnid = Math.random().toString(36).slice(-8);
+    this.commentPostRandomBnid = Math.random().toString(36).slice(-8);
+
+    // コメントの送受信の監視を開始
+    console.log(
+      `[acasp_HostScript] getCommentPostWsUrl - Start watching WebSocket connection...`,
+      commentWsUrl
+    );
+    this.startWebSocketHookForOrigin(commentWsUrl);
 
     // Allowed
     console.log(
@@ -618,71 +617,47 @@ class acasp_HostScript {
     return hashHex;
   }
 
-  getCommentPostColor(nickname) {
-    let charCodeSum = Array.from(nickname)
-      .map((c) => c.charCodeAt(0))
-      .reduce((a, b) => a + b);
-
-    const hue = (((12345678 * charCodeSum) % 256) / 256) * 360;
-    const rgb = this.hsvToRgb(hue, 0.75, 0.9);
-
-    return (
-      "#" + rgb[0].toString(16) + rgb[1].toString(16) + rgb[2].toString(16)
+  startWebSocketHookForOrigin(wsOrigin) {
+    window.postMessage(
+      {
+        type: "SET_TARGET_WEBHOOK_ORIGIN",
+        wsOrigin: wsOrigin,
+      },
+      "*"
     );
   }
 
-  /**
-   * Convert HSV to RGB
-   * @link https://gist.github.com/mjackson/5311256?permalink_comment_id=2789005#gistcomment-2789005
-   * (Thanks for stephencweiss and mjackson's snippet)
-   */
-  hsvToRgb(h, s, v) {
-    const hprime = h / 60;
-    const c = v * s;
-    const x = c * (1 - Math.abs((hprime % 2) - 1));
-    const m = v - c;
-    let r, g, b;
-    if (!hprime) {
-      r = 0;
-      g = 0;
-      b = 0;
-    }
-    if (hprime >= 0 && hprime < 1) {
-      r = c;
-      g = x;
-      b = 0;
-    }
-    if (hprime >= 1 && hprime < 2) {
-      r = x;
-      g = c;
-      b = 0;
-    }
-    if (hprime >= 2 && hprime < 3) {
-      r = 0;
-      g = c;
-      b = x;
-    }
-    if (hprime >= 3 && hprime < 4) {
-      r = 0;
-      g = x;
-      b = c;
-    }
-    if (hprime >= 4 && hprime < 5) {
-      r = x;
-      g = 0;
-      b = c;
-    }
-    if (hprime >= 5 && hprime < 6) {
-      r = c;
-      g = 0;
-      b = x;
-    }
+  sendWsMessageOnWebSocketHook(wsOrigin, wsMessage) {
+    window.postMessage(
+      {
+        type: "SEND_WS_MESSAGE",
+        wsOrigin: wsOrigin,
+        wsMessage: wsMessage,
+      },
+      "*"
+    );
+  }
 
-    r = Math.round((r + m) * 255);
-    g = Math.round((g + m) * 255);
-    b = Math.round((b + m) * 255);
+  onWsMessageReceivedFromWebSocketHook(wsOrigin, wsMessage) {
+    console.log(
+      "[acasp_HostScript] onWsMessageReceivedFromWebSocketHook",
+      wsOrigin,
+      wsMessage
+    );
 
-    return [r, g, b];
+    let message = undefined;
+    try {
+      message = JSON.parse(wsMessage);
+    } catch (e) {
+      console.warn(e);
+    }
+    if (!message) return;
+
+    if (message.type === "user/send-comment") {
+      window.localStorage.setItem("acaspCommentUserName", message.userName);
+      window.localStorage.setItem("acaspCommentColor", message.color);
+      window.localStorage.setItem("acaspCommentBnid", message.bnid);
+    }
   }
 }
 
