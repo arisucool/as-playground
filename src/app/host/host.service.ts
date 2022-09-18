@@ -40,6 +40,19 @@ export class HostService {
   }
 
   /**
+   * コメントの投稿
+   * @param nickname ニックネーム
+   * @param comment コメント本文
+   */
+  postComment(nickname: string, comment: string) {
+    this.sendMessageToHostScript({
+      type: 'POST_COMMENT',
+      nickname,
+      comment,
+    });
+  }
+
+  /**
    * 時刻または再生位置を秒数へ変換
    * @param timeString 時刻または再生位置の文字列 (例: '00:01:30' または '00:01)
    * @returns 秒数 (例: 90)

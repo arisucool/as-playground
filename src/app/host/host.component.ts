@@ -12,6 +12,8 @@ import { CommentBackupDialogComponent } from './comment-backup/comment-backup-di
 import { HostService } from './host.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { interval } from 'rxjs/internal/observable/interval';
+import { ViewerMessage } from '../common/viewer-message.interface';
+import { HostAvailableFunctions } from '../common/host-available-functions.interface';
 
 @Component({
   selector: 'app-host',
@@ -51,6 +53,11 @@ export class HostComponent implements OnInit {
   // 汎用
   public objectKeys = Object.keys;
 
+  // コメント投稿の可否
+  public availableFunctions: HostAvailableFunctions = {
+    postComment: false,
+  };
+
   constructor(
     private route: ActivatedRoute,
     private changeDetectorRef: ChangeDetectorRef,
@@ -65,23 +72,39 @@ export class HostComponent implements OnInit {
   async ngOnInit() {
     this.loadConfig();
 
-    switch (this.route.snapshot.queryParams.pageType) {
+    // ホストスクリプト (アソビステージのページ) によって指定されたパラメータを取得
+    const queryParams = this.route.snapshot.queryParams || {};
+
+    // ホストスクリプト (アソビステージのページ) によって識別されたページの種別を取得
+    switch (queryParams.pageType) {
       case 'ARCHIVE_PLAY_PAGE':
       //this.commentLoader.start();
       case 'REALTIME_PLAY_PAGE':
-        this.pageType = this.route.snapshot.queryParams.pageType;
+        this.pageType = queryParams.pageType;
         break;
       default:
         this.pageType = 'UNKNOWN';
     }
 
+    // 利用可能な機能を設定
+    const availableFunctions = queryParams.availableFunctions
+      ? queryParams.availableFunctions.split(/,/)
+      : [];
+    this.availableFunctions = {
+      postComment: availableFunctions.includes('postComment'),
+    };
+
+    // 初期化
     if (this.pageType != 'UNKNOWN') {
+      // コメントのスマートフォン連携を行うために SkyWay の Peer オブジェクトを初期化
       this.initPeer();
     }
 
-    this.startMessagingWithHostScript();
-
+    // IndexedDB のインスタンスを初期化
     await this.commentRecorder.connectDb();
+
+    // ホストスクリプト (アソビステージのページ) とのメッセージ通信を開始
+    this.startMessagingWithHostScript();
 
     // ビューア (連携中のスマートフォンなど) との接続状態を定期確認するためのタイマを開始
     this.viewerConnectionCheckTimer = interval(1000).subscribe(async () => {
@@ -137,38 +160,7 @@ export class HostComponent implements OnInit {
     });
 
     this.peer.on('connection', (dataConnection) => {
-      this.viewerHeartbeatReceivedAt = new Date();
-      if (this.dataConnection) {
-        console.log('Already connected with other viewer');
-        return;
-      }
-
-      dataConnection.once('open', () => {
-        console.log('Data connection opened.');
-        this.viewerHeartbeatReceivedAt = new Date();
-
-        this.sendMessageToViewer({
-          type: 'COMMENTS_RECEIVED',
-          comments: this.latestComments,
-        });
-
-        this.hostService.setIframeVisiblity(false);
-      });
-
-      dataConnection.on('data', (data) => {
-        const parsedData = JSON.parse(decodeURIComponent(data));
-        this.onReceiveMessageFromViewer(parsedData);
-      });
-
-      dataConnection.once('close', () => {
-        console.log('Data connection closed.');
-        this.dataConnection = null;
-        this.hostService.setIframeVisiblity(true);
-        this.changeDetectorRef.detectChanges();
-      });
-
-      this.dataConnection = dataConnection;
-      this.changeDetectorRef.detectChanges();
+      this.onConnectFromViewer(dataConnection);
     });
   }
 
@@ -294,6 +286,61 @@ export class HostComponent implements OnInit {
   }
 
   /**
+   * ビューア (連携中のスマートフォンなど) から接続されたときに呼ばれるイベントリスナ
+   * @param dataConnection メッセージを送受信するためのデータコネクション
+   */
+  protected onConnectFromViewer(dataConnection: DataConnection) {
+    if (this.dataConnection) {
+      console.warn(
+        'onConnectFromViewer - Closing DataConnection immediately, because already connected with other viewer'
+      );
+      dataConnection.close();
+      return;
+    }
+
+    this.viewerHeartbeatReceivedAt = new Date();
+
+    dataConnection.once('open', () => {
+      // ビューアとのデータコネクションが確立されたとき
+      console.log('onConnectFromViewer - DataConnection opened');
+      this.viewerHeartbeatReceivedAt = new Date();
+
+      // 接続時のメッセージを送信
+      this.sendMessageToViewer({
+        type: 'GREETING',
+        comments: this.latestComments,
+        availableFunctions: this.availableFunctions,
+      });
+
+      // as-playground を折りたたむ
+      this.hostService.setIframeVisiblity(false);
+    });
+
+    dataConnection.on('data', (data) => {
+      // ビューアとのデータコネクションでメッセージを受信したとき
+      const parsedData = JSON.parse(decodeURIComponent(data));
+      this.onReceiveMessageFromViewer(parsedData);
+    });
+
+    dataConnection.once('close', () => {
+      // ビューアとのデータコネクションが切断されたとき
+      console.log('onConnectFromViewer - DataConnection closed');
+      this.dataConnection = null;
+
+      // as-playground を展開
+      this.hostService.setIframeVisiblity(true);
+
+      // 状態変更を明示的に反映
+      this.changeDetectorRef.detectChanges();
+    });
+
+    this.dataConnection = dataConnection;
+
+    // 状態変更を明示的に反映
+    this.changeDetectorRef.detectChanges();
+  }
+
+  /**
    * ビューア (連携中のスマートフォンなど) からメッセージを受信したときに呼ばれるイベントリスナ
    * @param message 受信したメッセージ
    */
@@ -308,6 +355,13 @@ export class HostComponent implements OnInit {
           this.viewerHeartbeatReceivedAt
         );
         break;
+      case 'POST_COMMENT':
+        console.log(
+          'onReceiveMessageFromViewer - Received post comment request from viewer',
+          message
+        );
+        this.hostService.postComment(message.nickname, message.comment);
+        break;
       default:
         console.warn(
           'onReceiveMessageFromViewer - Unknown message received...',
@@ -320,7 +374,7 @@ export class HostComponent implements OnInit {
    * ビューア (連携中のスマートフォンなど) に対するメッセージの送信
    * @param message 送信するメッセージ
    */
-  protected sendMessageToViewer(message: any) {
+  protected sendMessageToViewer(message: ViewerMessage) {
     if (!this.dataConnection) {
       console.log('transferMessageToViewer', 'Canceled');
       return;

@@ -54,4 +54,47 @@
     </mat-list-item>
   </mat-list>
 
+  <form
+    class="comment-post-form"
+    #commentPostForm
+    (ngSubmit)="
+      postComment(commentNicknameInput.value, commentMessageInput.value)
+    "
+  >
+    <mat-form-field style="width: 30%" floatLabel="never">
+      <input
+        matInput
+        placeholder="ニックネーム"
+        [(ngModel)]="commentNickname"
+        #commentNicknameInput
+      />
+    </mat-form-field>
+    <mat-form-field floatLabel="never">
+      <input matInput placeholder="メッセージ" #commentMessageInput />
+    </mat-form-field>
+    <button
+      mat-icon-button
+      aria-label="コメントを投稿する"
+      matTooltip="コメントを投稿する"
+      [disabled]="isCommentSending"
+    >
+      <mat-icon *ngIf="!isCommentSending">send</mat-icon>
+      <mat-icon class="sending" *ngIf="isCommentSending">refresh</mat-icon>
+    </button>
+
+    <!-- コメント投稿が利用できないときのメッセージ -->
+    <div
+      class="message-unavailable-post-comment"
+      *ngIf="!availableFunctions.postComment"
+    >
+      <p>コメント投稿は現在利用できません</p>
+      <button
+        (click)="showCommentPostUnavailableDetailMessage()"
+        mat-icon-button
+      >
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </div>
+    <!---->
+  </form>
 </div>

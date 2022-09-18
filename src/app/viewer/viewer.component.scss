@@ -88,3 +88,54 @@
     margin-bottom: 0.5rem;
   }
 }
+
+// コメント投稿フォーム
+
+.comment-post-form {
+  background: #333333;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 2rem 0 2rem;
+
+  mat-form-field {
+    width: 100%;
+    margin: 0 0.5rem 0 0.5rem;
+  }
+
+  button {
+    margin: 0 0 0 0.5rem;
+
+    mat-icon.sending {
+      color: #888888;
+      animation: rotation 1s infinite;
+    }
+  }
+
+  div.message-unavailable-post-comment {
+    background-color: #333333;
+    position: absolute;
+    left: 0;
+    right: 0;
+    color: #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 0 0;
+    font-size: 0.9rem;
+    z-index: 100;
+
+    button {
+      margin-left: 0;
+
+      mat-icon {
+        line-height: 20px;
+      }
+    }
+  }
+}

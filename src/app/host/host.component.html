@@ -74,7 +74,11 @@
 
     <div *ngIf="peerId && !dataConnection">
       <p style="color: #333333; font-size: 0.8rem; margin-top: 0.3rem">
-        コメントをスマートフォンなどから閲覧するには<br />QRコードを読み取ってください
+        コメントをスマートフォンなどから 閲覧<ng-container
+          *ngIf="isAllowedPostComment"
+          >・投稿</ng-container
+        >
+        するには<br />QRコードを読み取ってください
       </p>
       <p>
         <qrcode

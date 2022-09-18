@@ -7,11 +7,19 @@ class acasp_HostScript {
 
   async init() {
     // 変数を初期化
-    this.iframeElem = null;
-    this.commentWatchingTimerId = null;
-    this.playerCurrentTimeWatchingTimerId = null;
+    this.iframeElem = undefined;
+    this.playerElem = undefined;
+    this.playerContainerElem = undefined;
+    this.commentWatchingTimerId = undefined;
+    this.playerCurrentTimeWatchingTimerId = undefined;
     this.playerCurrentTimeSeconds = "";
-    this.overlayCommentsElem = null;
+    this.overlayCommentsElem = undefined;
+    this.pageType = undefined;
+    this.commentViewerElem = undefined;
+    this.commentListElem = undefined;
+
+    this.commentPostWsUrl = undefined;
+    this.commentPostBnid = undefined;
 
     // コメント一覧の要素を取得
     this.commentViewerElem = document.body.querySelector(
@@ -66,10 +74,15 @@ class acasp_HostScript {
           this.showOverlayComments(message.data.comments);
         } else if (message.data.type === "SET_PLAYER_CURRENT_TIME") {
           this.setPlayerCurrentTime(message.data.seconds);
+        } else if (message.data.type === "POST_COMMENT") {
+          this.postComment(message.data.nickname, message.data.comment);
         }
       },
       false
     );
+
+    // コメント投稿を行うための接続先URLを取得
+    this.commentPostWsUrl = await this.getCommentPostWsUrl();
 
     // アプリケーションフレームを読み込み
     await this.loadIframe();
@@ -136,13 +149,18 @@ class acasp_HostScript {
     return new Promise((resolve, reject) => {
       const hostUrl = this.getOwnBaseUrl();
 
+      const availableFunctions = [];
+      if (this.commentPostWsUrl !== undefined) {
+        availableFunctions.push("postComment");
+      }
+
       this.iframeElem = document.createElement("iframe");
       this.iframeElem.onload = () => {
         resolve();
       };
       this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}&pageType=${
         this.pageType
-      }`;
+      }&availableFunctions=${availableFunctions.join(",")}`;
       this.iframeElem.style.bottom = "0px";
       this.iframeElem.style.right = "0px";
       this.iframeElem.style.position = "fixed";
@@ -363,6 +381,308 @@ class acasp_HostScript {
 
   setPlayerCurrentTime(seconds) {
     this.playerElem.currentTime = seconds;
+  }
+
+  async postComment(nickname, comment) {
+    return new Promise((resolve, reject) => {
+      if (
+        nickname === undefined ||
+        nickname.length === 0 ||
+        comment === undefined ||
+        comment.length === 0
+      ) {
+        return reject("Invalid property");
+      } else if (!this.commentPostWsUrl) {
+        return reject("commentPostWsUrl is empty");
+      }
+
+      const commentPostMessage = {
+        type: "user/send-comment",
+        userName: nickname,
+        comment: comment,
+        bnid: this.commentPostBnid,
+        color: this.getCommentPostColor(nickname),
+      };
+      console.log(
+        `[acasp_HostScript] postComment - Comment = `,
+        commentPostMessage
+      );
+
+      const ws = new WebSocket(this.commentPostWsUrl);
+      let isReceivedMessage = false;
+
+      ws.onopen = () => {
+        console.log(
+          `[acasp_HostScript] postComment - Connection with comment server opened`
+        );
+      };
+
+      ws.onmessage = (message) => {
+        console.log(
+          `[acasp_HostScript] postComment - Message received from comment server`,
+          message
+        );
+        if (isReceivedMessage) return;
+
+        isReceivedMessage = true;
+
+        console.log(
+          `[acasp_HostScript] postComment - Sending comment... `,
+          commentPostMessage
+        );
+        setTimeout(() => {
+          //ws.send(JSON.stringify(commentPostMessage));
+          console.log(`[acasp_HostScript] postComment - Done`);
+          ws.close();
+          resolve();
+        }, 1000);
+      };
+
+      ws.onerror = (error) => {
+        try {
+          ws.close();
+        } catch (e) {
+          console.log(
+            `[acasp_HostScript] postComment - Connection error occurred`,
+            e
+          );
+        }
+        reject(error);
+      };
+
+      ws.onclose = () => {
+        console.log(
+          `[acasp_HostScript] postComment - Connection with comment server closed`
+        );
+      };
+    });
+  }
+
+  async getCommentPostWsUrl() {
+    // 読み込まれているスクリプトのソースコードを取得
+    const scripts = {};
+    const scriptElems = Array.from(document.querySelectorAll("script"));
+    for (const scriptElem of scriptElems) {
+      if (scriptElem.innerHTML && scriptElem.getAttribute("src") == null) {
+        continue;
+      }
+
+      const scriptSrc = scriptElem.getAttribute("src");
+      let scriptCode = undefined;
+      try {
+        const response = await fetch(scriptSrc);
+        scriptCode = await response.text();
+      } catch (e) {
+        console.warn(e);
+        continue;
+      }
+
+      if (scriptCode === undefined) {
+        continue;
+      }
+
+      scripts[scriptSrc] = scriptCode;
+    }
+
+    console.log(
+      "[acasp_HostScript] getCommentPostWsUrl - Detected scripts = ",
+      scripts
+    );
+
+    // コメント投稿に関係する部分のハッシュ値を算出・照合
+    const EXPECTED_SCRIPT_CHUNK_HASHSUM = {
+      app: "11f04cc55ea889863cb9196db6a135af948fc956a6e1e6e0f1afa84919b530ca",
+      helper:
+        "4a15dd064841cc0fc1ed3f21cf21cec33e1864f97c2a5db12a2c0898449ceeb2",
+    };
+
+    let scriptChunkHashSum = {};
+    for (const key of Object.keys(EXPECTED_SCRIPT_CHUNK_HASHSUM)) {
+      scriptChunkHashSum[key] = null;
+    }
+
+    for (const scriptSrc of Object.keys(scripts)) {
+      const scriptCode = scripts[scriptSrc];
+
+      if (scriptSrc.match(/as-playground-host\.js/)) continue;
+
+      if (scriptSrc.match(/\/_app-[a-z0-9]+\.js$/)) {
+        // app script
+        const matches = scriptCode.match(/shortUUID:(\S+),/);
+        if (!matches) continue;
+        scriptChunkHashSum["app"] = await this.getSHA256Hashsum(matches[0]);
+      } else {
+        // helper script
+        const matches = scriptCode.match(/nickname:t,comment:n,[\S\s]+user/);
+        if (!matches) continue;
+        scriptChunkHashSum["helper"] = await this.getSHA256Hashsum(matches[0]);
+      }
+    }
+
+    for (const [key, hashSum] of Object.entries(scriptChunkHashSum)) {
+      if (hashSum === null || hashSum !== EXPECTED_SCRIPT_CHUNK_HASHSUM[key]) {
+        // Denied
+        console.error(
+          `[acasp_HostScript] getCommentPostWsUrl - DENIED!! because '${key}' script is unknown version or not found.`,
+          {
+            expected: EXPECTED_SCRIPT_CHUNK_HASHSUM[key],
+            actually: hashSum,
+          }
+        );
+        return false;
+      }
+    }
+
+    // イベント情報を取得するための API キーを検索
+    let eventInfoApiKey = undefined;
+    for (const scriptSrc of Object.keys(scripts)) {
+      const scriptCode = scripts[scriptSrc];
+      const matches = scriptCode.match(
+        /apiKey:\"\".concat\(\"([a-zA-Z0-9\-]+)\"/
+      );
+      if (!matches) continue;
+
+      eventInfoApiKey = matches[1];
+      break;
+    }
+
+    if (!eventInfoApiKey) {
+      // Denied
+      console.error(
+        "[acasp_HostScript] getCommentPostWsUrl - DENIED!! because apiKey for event information is not found."
+      );
+      return false;
+    }
+
+    console.log(
+      `[acasp_HostScript] getCommentPostWsUrl - apiKey for event information is found...`,
+      eventInfoApiKey
+    );
+
+    const eventPageKey = undefined; // TODO: イベントのURLを入力
+    if (!eventPageKey) {
+      console.error(
+        `[acasp_HostScript] getCommentPostWsUrl - DENIED!! because could not get eventPageKey`
+      );
+      return false;
+    }
+
+    // コメントURLを取得
+    const eventJsonResponse = await fetch(
+      "https://asobistage.microcms.io/api/v1/" + eventPageKey,
+      {
+        headers: {
+          "x-api-key": eventInfoApiKey,
+        },
+      }
+    );
+    const eventJson = await eventJsonResponse.json();
+    const commentUrls = eventJson["comment_url"];
+    if (!commentUrls || commentUrls.length === 0) {
+      console.error(
+        "[acasp_HostScript] getCommentPostWsUrl - DENIED!! because could not get comment_url"
+      );
+      return false;
+    } else if (
+      (commentUrls[0].fieldId !== undefined &&
+        commentUrls[0].fieldId !== "url") ||
+      commentUrls[0].url === undefined
+    ) {
+      console.error(
+        "[acasp_HostScript] getCommentPostWsUrl - DENIED!! because comment_url is invalid"
+      );
+      return false;
+    }
+    let commentWsUrl = commentUrls[0].url;
+
+    // コメント投稿のための bnid の設定
+    this.commentPostBnid = Math.random().toString(36).slice(-8);
+
+    // Allowed
+    console.log(
+      `[acasp_HostScript] getCommentPostWsUrl - Allowed :)`,
+      commentWsUrl
+    );
+    return commentWsUrl;
+  }
+
+  async getSHA256Hashsum(message) {
+    if (message.length === 0) return "";
+    const messageUInt8 = new TextEncoder("utf-8").encode(message);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", messageUInt8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    console.log("[acasp_HostScript] getSHA256Hashsum", hashHex, message);
+    return hashHex;
+  }
+
+  getCommentPostColor(nickname) {
+    let charCodeSum = Array.from(nickname)
+      .map((c) => c.charCodeAt(0))
+      .reduce((a, b) => a + b);
+
+    const hue = (((12345678 * charCodeSum) % 256) / 256) * 360;
+    const rgb = this.hsvToRgb(hue, 0.75, 0.9);
+
+    return (
+      "#" + rgb[0].toString(16) + rgb[1].toString(16) + rgb[2].toString(16)
+    );
+  }
+
+  /**
+   * Convert HSV to RGB
+   * @link https://gist.github.com/mjackson/5311256?permalink_comment_id=2789005#gistcomment-2789005
+   * (Thanks for stephencweiss and mjackson's snippet)
+   */
+  hsvToRgb(h, s, v) {
+    const hprime = h / 60;
+    const c = v * s;
+    const x = c * (1 - Math.abs((hprime % 2) - 1));
+    const m = v - c;
+    let r, g, b;
+    if (!hprime) {
+      r = 0;
+      g = 0;
+      b = 0;
+    }
+    if (hprime >= 0 && hprime < 1) {
+      r = c;
+      g = x;
+      b = 0;
+    }
+    if (hprime >= 1 && hprime < 2) {
+      r = x;
+      g = c;
+      b = 0;
+    }
+    if (hprime >= 2 && hprime < 3) {
+      r = 0;
+      g = c;
+      b = x;
+    }
+    if (hprime >= 3 && hprime < 4) {
+      r = 0;
+      g = x;
+      b = c;
+    }
+    if (hprime >= 4 && hprime < 5) {
+      r = x;
+      g = 0;
+      b = c;
+    }
+    if (hprime >= 5 && hprime < 6) {
+      r = c;
+      g = 0;
+      b = x;
+    }
+
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+
+    return [r, g, b];
   }
 }
 

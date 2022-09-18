@@ -4,6 +4,7 @@ import { NgModule } from '@angular/core';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule } from '@angular/forms';
 
 import { QRCodeModule } from 'angularx-qrcode';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
@@ -30,6 +31,7 @@ import { ChapterComponent } from './host/chapter/chapter.component';
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+    FormsModule,
     QRCodeModule,
     NgxChartsModule,
     MaterialModule,
