@@ -12,7 +12,7 @@ import { CommentBackupDialogComponent } from './comment-backup/comment-backup-di
 import { HostService } from './host.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { interval } from 'rxjs/internal/observable/interval';
-import { HostConfig } from './model/config.interface';
+import { HostConfig, HostTabName } from './model/config.interface';
 
 @Component({
   selector: 'app-host',
@@ -36,11 +36,7 @@ export class HostComponent implements OnInit {
   public pageType: 'REALTIME_PLAY_PAGE' | 'ARCHIVE_PLAY_PAGE' | 'UNKNOWN';
 
   // アクティブなタブ
-  public activeTabName:
-    | 'mobileLink'
-    | 'commentOverlay'
-    | 'commentAnalysis'
-    | 'chapter' = 'mobileLink';
+  public activeTabName: HostTabName;
 
   // イベント名
   public eventName: string = null;
@@ -102,6 +98,16 @@ export class HostComponent implements OnInit {
   ngOnDestroy(): void {}
 
   /**
+   * 表示するタブの切り替え
+   * @param tabName タブ名
+   */
+  setActiveTab(tabName: HostTabName) {
+    this.activeTabName = tabName;
+    this.config.general.activeTabName = tabName;
+    this.hostService.saveConfig();
+  }
+
+  /**
    * コメントのインポート/エクスポートダイアログの表示
    */
   openCommentBackupDialog() {
@@ -116,6 +122,7 @@ export class HostComponent implements OnInit {
    */
   protected loadConfig(): void {
     this.config = this.hostService.getConfig();
+    this.activeTabName = this.config.general.activeTabName;
   }
 
   /**

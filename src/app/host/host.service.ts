@@ -5,6 +5,16 @@ import { HostConfig } from './model/config.interface';
   providedIn: 'root',
 })
 export class HostService {
+  // 設定
+  readonly DEFAULT_CONFIG: HostConfig = {
+    general: {
+      activeTabName: 'mobileLink',
+    },
+    commentOverlay: {
+      isEnableCommentOverlayOnRealtimeView: false,
+      isEnableCommentOverlayOnArchiveView: true,
+    },
+  };
   config: HostConfig;
 
   constructor() {
@@ -144,13 +154,25 @@ export class HostService {
       }
     }
 
+    // 不足している設定をマージ
     if (config == undefined) {
-      config = {
-        commentOverlay: {
-          isEnableCommentOverlayOnRealtimeView: false,
-          isEnableCommentOverlayOnArchiveView: true,
-        },
-      };
+      config = this.DEFAULT_CONFIG;
+    } else {
+      for (const configCategory of Object.keys(this.DEFAULT_CONFIG)) {
+        if (configCategory in config === false) {
+          config[configCategory] = this.DEFAULT_CONFIG[configCategory];
+          continue;
+        }
+
+        for (const configKey of Object.keys(
+          this.DEFAULT_CONFIG[configCategory]
+        )) {
+          if (configKey in config[configCategory] === false) {
+            config[configCategory][configKey] =
+              this.DEFAULT_CONFIG[configCategory][configKey];
+          }
+        }
+      }
     }
 
     this.config = config;

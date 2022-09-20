@@ -16,7 +16,7 @@
       class="tab-button"
       matTooltip="スマートフォン連携"
       mat-icon-button
-      (click)="activeTabName = 'mobileLink'"
+      (click)="setActiveTab('mobileLink')"
       [ngClass]="{ active: activeTabName === 'mobileLink' }"
       [disabled]="activeTabName === 'mobileLink'"
     >
@@ -27,7 +27,7 @@
       class="tab-button"
       matTooltip="コメントのオーバレイ表示"
       mat-icon-button
-      (click)="activeTabName = 'commentOverlay'"
+      (click)="setActiveTab('commentOverlay')"
       [ngClass]="{ active: activeTabName === 'commentOverlay' }"
       [disabled]="activeTabName === 'commentOverlay'"
     >
@@ -38,7 +38,7 @@
       class="tab-button"
       matTooltip="コメントの分析"
       mat-icon-button
-      (click)="activeTabName = 'commentAnalysis'"
+      (click)="setActiveTab('commentAnalysis')"
       [ngClass]="{ active: activeTabName === 'commentAnalysis' }"
       [disabled]="activeTabName === 'commentAnalysis'"
     >
@@ -49,7 +49,7 @@
       class="tab-button"
       matTooltip="チャプタの生成"
       mat-icon-button
-      (click)="activeTabName = 'chapter'"
+      (click)="setActiveTab('chapter')"
       [ngClass]="{ active: activeTabName === 'chapter' }"
       [disabled]="activeTabName === 'chapter'"
     >
@@ -141,9 +141,9 @@
       <p>
         <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
       </p>
-      <p>現在使用できません</p>
+      <p>この機能は現在使用できません</p>
       <p style="font-size: 0.8rem">
-        この機能は、アーカイブ視聴時のみ使用できます
+        コメントの分析機能は、アーカイブ視聴時のみ使用できます
       </p>
     </ng-container>
   </ng-container>
@@ -171,9 +171,9 @@
       <p>
         <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
       </p>
-      <p>現在使用できません</p>
+      <p>この機能は現在使用できません</p>
       <p style="font-size: 0.8rem">
-        この機能は、アーカイブ視聴時のみ使用できます
+        チャプタの生成機能は、アーカイブ視聴時のみ使用できます
       </p>
     </ng-container>
   </ng-container>
