@@ -17,6 +17,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
       this.playerCurrentTimeWatchingTimerId = null;
       this.playerCurrentTimeSeconds = "";
       this.overlayCommentsElem = null;
+      this.mutationObserver = null;
 
       // イベントリスナを初期化
       this.listeners = {
@@ -101,6 +102,9 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
         // コメント一覧の新着コメントを監視
         this.startCommentWatching();
       }
+
+      // SPA のページ遷移の監視
+      this.startSPAPagingWatching();
     }
 
     destroy() {
@@ -113,6 +117,9 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
       if (this.listeners.resize) {
         window.removeEventListener("resize", this.listeners.resize);
       }
+
+      // SPAのページ遷移の監視を解除
+      this.stopSPAPagingWatching();
 
       // タイマの解除
       this.stopCommentWatching();
@@ -150,6 +157,15 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     onResizeWindow() {
       if (!this.nicoJs) return;
       this.nicoJs.resize(window.innerWidth, window.innerHeight);
+    }
+
+    onChangeSPAPage() {
+      console.log(
+        "[acasp_HostScript] onChangeSPAPage - SPA page changed",
+        window.location.href
+      );
+      this.destroy();
+      this.init();
     }
 
     getOwnScriptUrl() {
@@ -289,6 +305,36 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
       for (const comment of comments) {
         this.nicoJs.send({ text: comment.comment });
       }
+    }
+
+    startSPAPagingWatching() {
+      console.log(`[acasp_HostScript] startSPAPagingWatching`);
+
+      let lastUrl = location.href;
+
+      this.mutationObserver = new MutationObserver(() => {
+        const url = location.href;
+        if (url !== lastUrl) {
+          lastUrl = url;
+
+          //
+          setTimeout(() => {
+            this.onChangeSPAPage();
+          }, 500);
+        }
+      });
+      this.mutationObserver.observe(document, {
+        subtree: true,
+        childList: true,
+      });
+    }
+
+    stopSPAPagingWatching() {
+      console.log(`[acasp_HostScript] stopSPAPagingWatching`);
+
+      if (!this.mutationObserver) return;
+
+      this.mutationObserver.disconnect();
     }
 
     startCommentWatching() {
