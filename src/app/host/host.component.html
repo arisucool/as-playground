@@ -1,4 +1,4 @@
-<ng-container *ngIf="pageType === 'UNKNOWN'">
+<ng-container *ngIf="pageType && pageType === 'UNKNOWN'">
   <p>
     <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
   </p>
@@ -10,17 +10,28 @@
   </p>
 </ng-container>
 
-<ng-container *ngIf="pageType !== 'UNKNOWN'">
+<ng-container *ngIf="pageType && pageType !== 'UNKNOWN'">
   <div class="toolbar">
     <button
       class="tab-button"
-      matTooltip="コメントのスマートフォン連携"
+      matTooltip="スマートフォン連携"
       mat-icon-button
       (click)="activeTabName = 'mobileLink'"
       [ngClass]="{ active: activeTabName === 'mobileLink' }"
       [disabled]="activeTabName === 'mobileLink'"
     >
       <mat-icon>smartphone</mat-icon>
+    </button>
+
+    <button
+      class="tab-button"
+      matTooltip="コメントのオーバレイ表示"
+      mat-icon-button
+      (click)="activeTabName = 'commentOverlay'"
+      [ngClass]="{ active: activeTabName === 'commentOverlay' }"
+      [disabled]="activeTabName === 'commentOverlay'"
+    >
+      <mat-icon>subtitles</mat-icon>
     </button>
 
     <button
@@ -101,20 +112,38 @@
   </ng-container>
   <!---->
 
+  <!-- コメントのオーバレイ表示 -->
+  <ng-container *ngIf="activeTabName === 'commentOverlay'">
+    <app-comment-overlay
+      [(config)]="config.commentOverlay"
+    ></app-comment-overlay>
+  </ng-container>
+  <!---->
+
   <!-- コメント分析 -->
   <ng-container *ngIf="activeTabName === 'commentAnalysis'">
     <app-comment-analysis
       [eventName]="eventName"
-      *ngIf="eventName"
+      *ngIf="pageType === 'ARCHIVE_PLAY_PAGE' && eventName"
     ></app-comment-analysis>
 
-    <ng-container *ngIf="!eventName">
+    <ng-container *ngIf="pageType === 'ARCHIVE_PLAY_PAGE' && !eventName">
       <p>
         <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
       </p>
       <p>映像を再生してください</p>
       <p style="font-size: 0.8rem">
         この機能を使用するには、映像をしばらく再生してください
+      </p>
+    </ng-container>
+
+    <ng-container *ngIf="pageType === 'REALTIME_PLAY_PAGE'">
+      <p>
+        <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
+      </p>
+      <p>現在使用できません</p>
+      <p style="font-size: 0.8rem">
+        この機能は、アーカイブ視聴時のみ使用できます
       </p>
     </ng-container>
   </ng-container>
@@ -125,16 +154,26 @@
     <app-chapter
       [eventName]="eventName"
       [playerCurrentTimeSeconds]="playerCurrentTimeSeconds"
-      *ngIf="eventName"
+      *ngIf="pageType === 'ARCHIVE_PLAY_PAGE' && eventName"
     ></app-chapter>
 
-    <ng-container *ngIf="!eventName">
+    <ng-container *ngIf="pageType === 'ARCHIVE_PLAY_PAGE' && !eventName">
       <p>
         <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
       </p>
       <p>映像を再生してください</p>
       <p style="font-size: 0.8rem">
         この機能を使用するには、映像をしばらく再生してください
+      </p>
+    </ng-container>
+
+    <ng-container *ngIf="pageType === 'REALTIME_PLAY_PAGE'">
+      <p>
+        <mat-icon style="color: #f1c40f; font-size: 2.4rem">warning</mat-icon>
+      </p>
+      <p>現在使用できません</p>
+      <p style="font-size: 0.8rem">
+        この機能は、アーカイブ視聴時のみ使用できます
       </p>
     </ng-container>
   </ng-container>

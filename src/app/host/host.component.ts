@@ -12,6 +12,7 @@ import { CommentBackupDialogComponent } from './comment-backup/comment-backup-di
 import { HostService } from './host.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { interval } from 'rxjs/internal/observable/interval';
+import { HostConfig } from './model/config.interface';
 
 @Component({
   selector: 'app-host',
@@ -19,7 +20,10 @@ import { interval } from 'rxjs/internal/observable/interval';
   styleUrls: ['./host.component.scss'],
 })
 export class HostComponent implements OnInit {
-  // コメントのスマートフォン連携
+  // 設定情報
+  config: HostConfig;
+
+  // スマートフォン連携 (コメントをスマートフォンなどから閲覧する機能) に関する変数
   public peer: Peer;
   public peerId: string;
   public viewerUrl: string;
@@ -29,11 +33,14 @@ export class HostComponent implements OnInit {
   protected readonly HEARTBEAT_DISCONTINUED_THRESHOLD_INTERVAL_MILISECONDS = 10000;
 
   // ページの種別
-  public pageType: string;
+  public pageType: 'REALTIME_PLAY_PAGE' | 'ARCHIVE_PLAY_PAGE' | 'UNKNOWN';
 
   // アクティブなタブ
-  public activeTabName: 'mobileLink' | 'commentAnalysis' | 'chapter' =
-    'mobileLink';
+  public activeTabName:
+    | 'mobileLink'
+    | 'commentOverlay'
+    | 'commentAnalysis'
+    | 'chapter' = 'mobileLink';
 
   // イベント名
   public eventName: string = null;
@@ -107,11 +114,13 @@ export class HostComponent implements OnInit {
   /**
    * 設定の読み込み
    */
-  protected loadConfig(): void {}
+  protected loadConfig(): void {
+    this.config = this.hostService.getConfig();
+  }
 
   /**
    * Skyway のための Peer の初期化
-   * (コメントのスマートフォン連携のための待受を開始)
+   * (スマートフォン連携のための待受を開始)
    */
   protected initPeer(): void {
     if (this.peer) {
@@ -264,18 +273,28 @@ export class HostComponent implements OnInit {
       newComments
     );
 
-    // オーバレイでコメントを表示
-    this.hostService.showOverlayComments(newComments);
-
     // コメントをビューアへ転送
     this.sendMessageToViewer({
       type: 'COMMENTS_RECEIVED',
       comments: comments,
     });
 
-    // コメントをデータベースへ保存
-    for (const comment of newComments) {
-      await this.commentRecorder.registerComment(this.eventName, comment);
+    // ページ種別に応じて処理
+    if (this.pageType === 'REALTIME_PLAY_PAGE') {
+      // コメントをオーバレイ表示
+      if (this.config.commentOverlay.isEnableCommentOverlayOnRealtimeView) {
+        this.hostService.showOverlayComments(newComments);
+      }
+    } else if (this.pageType === 'ARCHIVE_PLAY_PAGE') {
+      // コメントをオーバレイ表示
+      if (this.config.commentOverlay.isEnableCommentOverlayOnArchiveView) {
+        this.hostService.showOverlayComments(newComments);
+      }
+
+      // コメントをデータベースへ保存
+      for (const comment of newComments) {
+        await this.commentRecorder.registerComment(this.eventName, comment);
+      }
     }
   }
 
@@ -329,7 +348,6 @@ export class HostComponent implements OnInit {
    */
   protected sendMessageToViewer(message: any) {
     if (!this.dataConnection) {
-      console.log('transferMessageToViewer', 'Canceled');
       return;
     }
     console.log('transferMessageToViewer', message);

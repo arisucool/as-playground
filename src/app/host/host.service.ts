@@ -1,10 +1,15 @@
 import { Injectable } from '@angular/core';
+import { HostConfig } from './model/config.interface';
 
 @Injectable({
   providedIn: 'root',
 })
 export class HostService {
-  constructor() {}
+  config: HostConfig;
+
+  constructor() {
+    this.loadConfig();
+  }
 
   /**
    * 動画の再生位置の設定
@@ -103,6 +108,52 @@ export class HostService {
       }viewer/${hostPeerId}`;
     }
     return `${window.location.protocol}//${window.location.host}/viewer/${hostPeerId}`;
+  }
+
+  /**
+   * 設定の取得
+   * @returns 設定
+   */
+  getConfig(): HostConfig {
+    if (this.config === undefined) this.loadConfig();
+
+    return this.config;
+  }
+
+  /**
+   * 設定の保存
+   */
+  saveConfig() {
+    // 設定を保存
+    window.localStorage.setItem('acaspHostConfig', JSON.stringify(this.config));
+  }
+
+  /**
+   * 設定の読み込み
+   */
+  protected loadConfig() {
+    let config: HostConfig = undefined;
+
+    const configJson = window.localStorage.getItem('acaspHostConfig');
+
+    if (configJson) {
+      try {
+        config = JSON.parse(configJson);
+      } catch (e) {
+        console.warn(`[HostService] Failed to parse config...`, config);
+      }
+    }
+
+    if (config == undefined) {
+      config = {
+        commentOverlay: {
+          isEnableCommentOverlayOnRealtimeView: false,
+          isEnableCommentOverlayOnArchiveView: true,
+        },
+      };
+    }
+
+    this.config = config;
   }
 
   /**
