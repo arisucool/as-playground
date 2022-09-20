@@ -85,6 +85,9 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
       if (this.pageType == "REALTIME_PLAY_PAGE") {
         // コメント一覧の新着コメントを監視
         this.startCommentWatching();
+
+        // アプリケーションフレームを表示
+        this.setIframeVisiblity(true);
       }
 
       // アーカイブ再生画面ならば
@@ -115,6 +118,9 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
 
         // コメント一覧の新着コメントを監視
         this.startCommentWatching();
+
+        // アプリケーションフレームを表示
+        this.setIframeVisiblity(true);
       }
 
       // SPA のページ遷移の監視
@@ -173,13 +179,27 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
       this.nicoJs.resize(window.innerWidth, window.innerHeight);
     }
 
-    onChangeSPAPage() {
+    async onChangeSPAPage() {
       console.log(
         "[acasp_HostScript] onChangeSPAPage - SPA page changed",
         window.location.href
       );
+
+      let iframeVisiblity = undefined;
+      try {
+        iframeVisiblity = this.getIframeVisiblity();
+      } catch (e) {}
+
       this.destroy();
-      this.init();
+      await this.init();
+
+      if (iframeVisiblity !== undefined) {
+        console.log(
+          "[acasp_HostScript] onChangeSPAPage - Restoring Iframe visibility...",
+          iframeVisiblity
+        );
+        this.setIframeVisiblity(iframeVisiblity);
+      }
     }
 
     getOwnScriptUrl() {
@@ -249,6 +269,8 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
         this.toggleBtnElem.style.height = "12px";
         this.toggleBtnElem.style.zIndex = "9999";
 
+        this.setIframeVisiblity(false);
+
         document.body.appendChild(this.toggleBtnElem);
       });
     }
@@ -292,8 +314,15 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
       });
     }
 
-    toggleIframeVisiblity() {
+    getIframeVisiblity() {
       if (this.iframeElem.style.display == "none") {
+        return false;
+      }
+      return true;
+    }
+
+    toggleIframeVisiblity() {
+      if (!this.getIframeVisiblity()) {
         this.setIframeVisiblity(true);
       } else {
         this.setIframeVisiblity(false);
@@ -301,6 +330,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     }
 
     setIframeVisiblity(value) {
+      console.log(`[acasp_HostScript] setIframeVisiblity - ${value}`);
       if (value) {
         this.iframeElem.style.display = "block";
         this.toggleBtnElem.style.bottom = "317px";
@@ -339,7 +369,6 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
         if (url !== lastUrl) {
           lastUrl = url;
 
-          //
           setTimeout(() => {
             this.onChangeSPAPage();
           }, 500);
@@ -751,6 +780,8 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     module.exports = acasp_HostScript;
   } else {
     acasp_HostScriptInstance = new acasp_HostScript();
-    acasp_HostScriptInstance.init();
+    acasp_HostScriptInstance.init().then(() => {
+      acasp_HostScriptInstance.setIframeVisiblity(true);
+    });
   }
 })();

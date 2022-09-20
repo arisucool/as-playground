@@ -161,8 +161,6 @@ export class HostComponent implements OnInit {
       this.peerId = this.peer.id;
       this.viewerUrl = this.hostService.generateViewerUrl(this.peerId);
 
-      this.hostService.setIframeVisiblity(true);
-
       this.changeDetectorRef.detectChanges();
 
       // Peer ID を保存
