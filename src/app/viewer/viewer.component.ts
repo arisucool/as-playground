@@ -60,7 +60,9 @@ export class ViewerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.initPeer();
+    window.setTimeout(() => {
+      this.initPeer();
+    }, 500);
 
     // ハートビートの定期送信を行うためのタイマを開始
     this.heartbeatTimer = interval(
