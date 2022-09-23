@@ -196,7 +196,7 @@ export class HostComponent implements OnInit {
   }
 
   /**
-   * ホストスクリプト (アソビステージのページ) からのメッセージ受信の待受開始
+   * AsBridge (アソビステージのページに注入されたスクリプト) からのメッセージ受信の待受開始
    */
   protected startMessagingWithAsBridge() {
     window.addEventListener(
@@ -228,7 +228,7 @@ export class HostComponent implements OnInit {
   }
 
   /**
-   * ホストスクリプト (アソビステージのページ) からコメントを受信したときに呼ばれるイベントリスナ
+   * AsBridge (アソビステージのページに注入されたスクリプト) からコメントを受信したときに呼ばれるイベントリスナ
    * @param comments 受信したコメント
    * @param eventName 受信したイベント名
    * @param currentTimeSeconds 受信した再生位置
@@ -306,7 +306,7 @@ export class HostComponent implements OnInit {
   }
 
   /**
-   * ホストスクリプト (アソビステージのページ) から映像の再生位置を受信したときに呼ばれるイベントリスナ
+   * AsBridge (アソビステージのページ) から映像の再生位置を受信したときに呼ばれるイベントリスナ
    * @param currentTime 受信した再生位置 (例: '00:01:30')
    */
   protected async onReceivePlayerCurrentTimeFromAsBridge(

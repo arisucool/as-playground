@@ -179,7 +179,7 @@ export class HostService {
   }
 
   /**
-   * ホストスクリプト (アソビステージのページ) に対するメッセージの送信
+   * AsBridge (アソビステージのページに注入されたスクリプト) に対するメッセージの送信
    * @param message 送信するメッセージ
    */
   protected sendMessageToAsBridge(message: any) {
