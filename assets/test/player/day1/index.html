@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base href="/assets/test/player/day1/" />
+    <meta charset="utf-8" />
+    <title>as-playground テストページ</title>
+    <link rel="stylesheet" href="../../style.css" />
+    <script src="../../dummy-data.js"></script>
+    <script src="../../script.js"></script>
+    <script>
+      new TestPage();
+    </script>
+  </head>
+
+  <body>
+    <h1>リアルタイム テストページ</h1>
+
+    <section>
+      <h2>動画領域 (再生秒数の取得用)</h2>
+      <div class="video-js">
+        <video
+          class="vjs-tech"
+          src="../../dummy.mp4"
+          muted
+          autoplay
+          controls
+          width="320"
+        ></video>
+      </div>
+
+      <h2>コメント一覧領域</h2>
+
+      <button onClick="addDummyComment()">コメントの追加</button>
+
+      <div class="commentViewer_commentViewer__aa">
+        <ul class="commentViewer_commentList__aa"></ul>
+      </div>
+    </section>
+  </body>
+</html>
