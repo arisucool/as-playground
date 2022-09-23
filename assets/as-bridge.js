@@ -3,11 +3,12 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 }
 
 (function () {
-  class acasp_AsBridge {
+  class AsBridge {
     constructor(options) {
       this.loader = options && options.loader ? options.loader : "bookmarklet";
       this.baseUrl = options && options.baseUrl ? options.baseUrl : null;
       this.NicoJS = options && options.nicoJS ? options.nicoJS : null;
+      this.asBridgeRevision = 1;
     }
 
     async init() {
@@ -52,7 +53,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
         this.pageType = "UNKNOWN"; // 不明な画面
       }
       console.log(
-        `[acasp_AsBridge] init - pageType = ${this.pageType}`,
+        `[AsBridge] init - pageType = ${this.pageType}`,
         this.commentViewerElem,
         this.commentListElem,
         this.playerElem
@@ -114,7 +115,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
     }
 
     destroy() {
-      console.log(`[acasp_AsBridge] destroy - Destroying instance...`);
+      console.log(`[AsBridge] destroy - Destroying instance...`);
 
       // イベントリスナの解除
       if (this.listeners.message) {
@@ -167,7 +168,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 
     async onChangeSPAPage() {
       console.log(
-        "[acasp_AsBridge] onChangeSPAPage - SPA page changed",
+        "[AsBridge] onChangeSPAPage - SPA page changed",
         window.location.href
       );
 
@@ -181,7 +182,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 
       if (iframeVisiblity !== undefined) {
         console.log(
-          "[acasp_AsBridge] onChangeSPAPage - Restoring Iframe visibility...",
+          "[AsBridge] onChangeSPAPage - Restoring Iframe visibility...",
           iframeVisiblity
         );
         this.setIframeVisiblity(iframeVisiblity);
@@ -214,13 +215,16 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       return new Promise((resolve, reject) => {
         const hostUrl = this.getOwnBaseUrl();
 
+        const params = new URLSearchParams();
+        params.set("t", Date.now());
+        params.set("pageType", this.pageType);
+        params.set("asBridgeRevision", this.asBridgeRevision);
+
         this.iframeElem = document.createElement("iframe");
         this.iframeElem.onload = () => {
           resolve();
         };
-        this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}&pageType=${
-          this.pageType
-        }`;
+        this.iframeElem.src = `${hostUrl}/host?${params.toString()}`;
         this.iframeElem.style.bottom = "0px";
         this.iframeElem.style.right = "0px";
         this.iframeElem.style.position = "fixed";
@@ -308,7 +312,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
     }
 
     setIframeVisiblity(value) {
-      console.log(`[acasp_AsBridge] setIframeVisiblity - ${value}`);
+      console.log(`[AsBridge] setIframeVisiblity - ${value}`);
       if (value) {
         this.iframeElem.style.display = "block";
         this.toggleBtnElem.style.bottom = "317px";
@@ -338,7 +342,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
     }
 
     startSPAPagingWatching() {
-      console.log(`[acasp_AsBridge] startSPAPagingWatching`);
+      console.log(`[AsBridge] startSPAPagingWatching`);
 
       let lastUrl = location.href;
 
@@ -359,7 +363,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
     }
 
     stopSPAPagingWatching() {
-      console.log(`[acasp_AsBridge] stopSPAPagingWatching`);
+      console.log(`[AsBridge] stopSPAPagingWatching`);
 
       if (!this.mutationObserver) return;
 
@@ -367,7 +371,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
     }
 
     startCommentWatching() {
-      console.log(`[acasp_AsBridge] startCommentWatching`);
+      console.log(`[AsBridge] startCommentWatching`);
 
       this.stopCommentWatching();
 
@@ -402,7 +406,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
     }
 
     startPlayerCurrentTimeWatching() {
-      console.log("[acasp_AsBridge] startPlayerCurrentTimeWatching");
+      console.log("[AsBridge] startPlayerCurrentTimeWatching");
 
       this.stopPlayerCurrentTimeWatching();
 
@@ -486,9 +490,9 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
   }
 
   if (typeof module !== "undefined") {
-    module.exports = acasp_AsBridge;
+    module.exports = AsBridge;
   } else {
-    acasp_AsBridgeInstance = new acasp_AsBridge();
+    acasp_AsBridgeInstance = new AsBridge();
     acasp_AsBridgeInstance.init().then(() => {
       acasp_AsBridgeInstance.setIframeVisiblity(true);
     });
