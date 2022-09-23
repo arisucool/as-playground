@@ -8,6 +8,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       this.loader = options && options.loader ? options.loader : "bookmarklet";
       this.baseUrl = options && options.baseUrl ? options.baseUrl : null;
       this.NicoJS = options && options.nicoJS ? options.nicoJS : null;
+      this.asBridgeRevision = 1;
     }
 
     async init() {
@@ -214,13 +215,16 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       return new Promise((resolve, reject) => {
         const hostUrl = this.getOwnBaseUrl();
 
+        const params = new URLSearchParams();
+        params.set("t", Date.now());
+        params.set("pageType", this.pageType);
+        params.set("asBridgeRevision", this.asBridgeRevision);
+
         this.iframeElem = document.createElement("iframe");
         this.iframeElem.onload = () => {
           resolve();
         };
-        this.iframeElem.src = `${hostUrl}/host?t=${new Date().getTime()}&pageType=${
-          this.pageType
-        }`;
+        this.iframeElem.src = `${hostUrl}/host?${params.toString()}`;
         this.iframeElem.style.bottom = "0px";
         this.iframeElem.style.right = "0px";
         this.iframeElem.style.position = "fixed";
