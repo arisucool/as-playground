@@ -283,7 +283,7 @@ export class HostComponent implements OnInit {
     // コメントをビューアへ転送
     this.sendMessageToViewer({
       type: 'COMMENTS_RECEIVED',
-      comments: comments,
+      comments: newComments,
     });
 
     // ページ種別に応じて処理
