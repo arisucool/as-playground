@@ -1,9 +1,9 @@
-if (typeof acasp_HostScriptInstance !== "undefined") {
-  acasp_HostScriptInstance.destroy();
+if (typeof acasp_AsBridgeInstance !== "undefined") {
+  acasp_AsBridgeInstance.destroy();
 }
 
 (function () {
-  class acasp_HostScript {
+  class acasp_AsBridge {
     constructor(options) {
       this.loader = options && options.loader ? options.loader : "bookmarklet";
       this.baseUrl = options && options.baseUrl ? options.baseUrl : null;
@@ -52,7 +52,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
         this.pageType = "UNKNOWN"; // 不明な画面
       }
       console.log(
-        `[acasp_HostScript] init - pageType = ${this.pageType}`,
+        `[acasp_AsBridge] init - pageType = ${this.pageType}`,
         this.commentViewerElem,
         this.commentListElem,
         this.playerElem
@@ -114,7 +114,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     }
 
     destroy() {
-      console.log(`[acasp_HostScript] destroy - Destroying instance...`);
+      console.log(`[acasp_AsBridge] destroy - Destroying instance...`);
 
       // イベントリスナの解除
       if (this.listeners.message) {
@@ -167,7 +167,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
 
     async onChangeSPAPage() {
       console.log(
-        "[acasp_HostScript] onChangeSPAPage - SPA page changed",
+        "[acasp_AsBridge] onChangeSPAPage - SPA page changed",
         window.location.href
       );
 
@@ -181,7 +181,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
 
       if (iframeVisiblity !== undefined) {
         console.log(
-          "[acasp_HostScript] onChangeSPAPage - Restoring Iframe visibility...",
+          "[acasp_AsBridge] onChangeSPAPage - Restoring Iframe visibility...",
           iframeVisiblity
         );
         this.setIframeVisiblity(iframeVisiblity);
@@ -191,7 +191,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     getOwnScriptUrl() {
       let scripts = document.getElementsByTagName("script");
       for (let script of scripts) {
-        if (script.src && script.src.match(/as-playground-host.js/)) {
+        if (script.src && script.src.match(/as-bridge.js/)) {
           return script.src;
         }
       }
@@ -207,7 +207,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
         return;
       }
 
-      return scriptUrl.replace(/\/assets\/as-playground-host\.js\?t=\d+/g, "");
+      return scriptUrl.replace(/\/assets\/as-bridge\.js\?t=\d+/g, "");
     }
 
     async loadIframe() {
@@ -308,7 +308,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     }
 
     setIframeVisiblity(value) {
-      console.log(`[acasp_HostScript] setIframeVisiblity - ${value}`);
+      console.log(`[acasp_AsBridge] setIframeVisiblity - ${value}`);
       if (value) {
         this.iframeElem.style.display = "block";
         this.toggleBtnElem.style.bottom = "317px";
@@ -338,7 +338,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     }
 
     startSPAPagingWatching() {
-      console.log(`[acasp_HostScript] startSPAPagingWatching`);
+      console.log(`[acasp_AsBridge] startSPAPagingWatching`);
 
       let lastUrl = location.href;
 
@@ -359,7 +359,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     }
 
     stopSPAPagingWatching() {
-      console.log(`[acasp_HostScript] stopSPAPagingWatching`);
+      console.log(`[acasp_AsBridge] stopSPAPagingWatching`);
 
       if (!this.mutationObserver) return;
 
@@ -367,7 +367,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     }
 
     startCommentWatching() {
-      console.log(`[acasp_HostScript] startCommentWatching`);
+      console.log(`[acasp_AsBridge] startCommentWatching`);
 
       this.stopCommentWatching();
 
@@ -402,7 +402,7 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
     }
 
     startPlayerCurrentTimeWatching() {
-      console.log("[acasp_HostScript] startPlayerCurrentTimeWatching");
+      console.log("[acasp_AsBridge] startPlayerCurrentTimeWatching");
 
       this.stopPlayerCurrentTimeWatching();
 
@@ -486,11 +486,11 @@ if (typeof acasp_HostScriptInstance !== "undefined") {
   }
 
   if (typeof module !== "undefined") {
-    module.exports = acasp_HostScript;
+    module.exports = acasp_AsBridge;
   } else {
-    acasp_HostScriptInstance = new acasp_HostScript();
-    acasp_HostScriptInstance.init().then(() => {
-      acasp_HostScriptInstance.setIframeVisiblity(true);
+    acasp_AsBridgeInstance = new acasp_AsBridge();
+    acasp_AsBridgeInstance.init().then(() => {
+      acasp_AsBridgeInstance.setIframeVisiblity(true);
     });
   }
 })();
