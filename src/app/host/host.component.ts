@@ -79,10 +79,10 @@ export class HostComponent implements OnInit {
   async ngOnInit() {
     this.loadConfig();
 
-    // ホストスクリプト (アソビステージのページ) によって指定されたパラメータを取得
+    // AsBridge (アソビステージのページに注入したスクリプト) によって指定されたパラメータを取得
     const queryParams = this.route.snapshot.queryParams || {};
 
-    // ホストスクリプト (アソビステージのページ) によって識別されたページの種別を取得
+    // AsBridge (アソビ) によって識別されたページの種別を取得
     switch (queryParams.pageType) {
       case 'ARCHIVE_PLAY_PAGE':
       //this.commentLoader.start();
@@ -113,7 +113,7 @@ export class HostComponent implements OnInit {
     // IndexedDB のインスタンスを初期化
     await this.commentRecorder.connectDb();
 
-    // ホストスクリプト (アソビステージのページ) とのメッセージ通信を開始
+    // AsBridge (アソビステージの) とのメッセージ通信を開始
     this.startMessagingWithAsBridge();
 
     // ビューア (連携中のスマートフォンなど) との接続状態を定期確認するためのタイマを開始
@@ -195,7 +195,7 @@ export class HostComponent implements OnInit {
   }
 
   /**
-   * ホストスクリプト (アソビステージのページ) からのメッセージ受信の待受開始
+   * AsBridge (アソビステージのページに注入したスクリプト) からのメッセージ受信の待受開始
    */
   protected startMessagingWithAsBridge() {
     window.addEventListener(
@@ -214,8 +214,8 @@ export class HostComponent implements OnInit {
               message.data.currentTimeSeconds
             );
             break;
-          case 'ERROR_OCCURRED_ON_HOST_SCRIPT':
-            this.onReceiveErrorFromHostScript(message.data.errorMessage);
+          case 'ERROR_OCCURRED_ON_AS_BRIDGE':
+            this.onReceiveErrorFromAsBridge(message.data.errorMessage);
           default:
             console.warn(
               'startMessagingWithAsBridge',
@@ -229,7 +229,7 @@ export class HostComponent implements OnInit {
   }
 
   /**
-   * ホストスクリプト (アソビステージのページ) からコメントを受信したときに呼ばれるイベントリスナ
+   * AsBridge (アソビステージのページに注入したスクリプト) からコメントを受信したときに呼ばれるイベントリスナ
    * @param comments 受信したコメント
    * @param eventName 受信したイベント名
    * @param currentTimeSeconds 受信した再生位置
@@ -307,7 +307,7 @@ export class HostComponent implements OnInit {
   }
 
   /**
-   * ホストスクリプト (アソビステージのページ) から映像の再生位置を受信したときに呼ばれるイベントリスナ
+   * AsBridge (アソビステージのページに注入したスクリプト) から映像の再生位置を受信したときに呼ばれるイベントリスナ
    * @param currentTime 受信した再生位置 (例: '00:01:30')
    */
   protected async onReceivePlayerCurrentTimeFromAsBridge(
@@ -327,7 +327,7 @@ export class HostComponent implements OnInit {
     this.playerCurrentTimeSeconds = currentTimeSeconds;
   }
 
-  protected onReceiveErrorFromHostScript(errorMessage: string) {
+  protected onReceiveErrorFromAsBridge(errorMessage: string) {
     this.snackBar.open(`エラー: ${errorMessage}`, undefined, {
       duration: 5000,
     });

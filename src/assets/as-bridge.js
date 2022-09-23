@@ -538,10 +538,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
           bnid: prevCommentBnid || this.commentPostRandomBnid,
           color: prevCommentColor,
         };
-        console.log(
-          `[acasp_HostScript] postComment - Comment = `,
-          commentPostMessage
-        );
+        console.log(`[AsBridge] postComment - Comment = `, commentPostMessage);
 
         this.sendWsMessageOnWebSocketHook(
           this.commentPostWsUrl,
@@ -552,7 +549,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       }).catch((e) => {
         this.iframeElem.contentWindow.postMessage(
           {
-            type: "ERROR_OCCURRED_ON_HOST_SCRIPT",
+            type: "ERROR_OCCURRED_ON_AS_BRIDGE",
             errorMessage: e.toString(),
           },
           "*"
@@ -587,7 +584,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       }
 
       console.log(
-        "[acasp_HostScript] getCommentPostWsUrl - Detected scripts = ",
+        "[AsBridge] getCommentPostWsUrl - Detected scripts = ",
         scripts
       );
 
@@ -606,7 +603,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       for (const scriptSrc of Object.keys(scripts)) {
         const scriptCode = scripts[scriptSrc];
 
-        if (scriptSrc.match(/as-playground-host\.js/)) continue;
+        if (scriptSrc.match(/as-bridge\.js/)) continue;
 
         if (scriptSrc.match(/\/_app-[a-z0-9]+\.js$/)) {
           // app script
@@ -630,7 +627,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
         ) {
           // Denied
           console.error(
-            `[acasp_HostScript] getCommentPostWsUrl - DENIED!! because '${key}' script is unknown version or not found.`,
+            `[AsBridge] getCommentPostWsUrl - DENIED!! because '${key}' script is unknown version or not found.`,
             {
               expected: EXPECTED_SCRIPT_CHUNK_HASHSUM[key],
               actually: hashSum,
@@ -656,20 +653,20 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       if (!eventInfoApiKey) {
         // Denied
         console.error(
-          "[acasp_HostScript] getCommentPostWsUrl - DENIED!! because apiKey for event information is not found."
+          "[AsBridge] getCommentPostWsUrl - DENIED!! because apiKey for event information is not found."
         );
         return false;
       }
 
       console.log(
-        `[acasp_HostScript] getCommentPostWsUrl - apiKey for event information is found...`,
+        `[AsBridge] getCommentPostWsUrl - apiKey for event information is found...`,
         eventInfoApiKey
       );
 
       const eventPageKey = ""; // TODO: イベントのURLを入力
       if (!eventPageKey) {
         console.error(
-          `[acasp_HostScript] getCommentPostWsUrl - DENIED!! because could not get eventPageKey`
+          `[AsBridge] getCommentPostWsUrl - DENIED!! because could not get eventPageKey`
         );
         return false;
       }
@@ -687,7 +684,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       const commentUrls = eventJson["comment_url"];
       if (!commentUrls || commentUrls.length === 0) {
         console.error(
-          "[acasp_HostScript] getCommentPostWsUrl - DENIED!! because could not get comment_url"
+          "[AsBridge] getCommentPostWsUrl - DENIED!! because could not get comment_url"
         );
         return false;
       } else if (
@@ -696,7 +693,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
         commentUrls[0].url === undefined
       ) {
         console.error(
-          "[acasp_HostScript] getCommentPostWsUrl - DENIED!! because comment_url is invalid"
+          "[AsBridge] getCommentPostWsUrl - DENIED!! because comment_url is invalid"
         );
         return false;
       }
@@ -707,16 +704,13 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 
       // コメントの送受信の監視を開始
       console.log(
-        `[acasp_HostScript] getCommentPostWsUrl - Start watching WebSocket connection...`,
+        `[AsBridge] getCommentPostWsUrl - Start watching WebSocket connection...`,
         commentWsUrl
       );
       this.startWebSocketHookForOrigin(commentWsUrl);
 
       // Allowed
-      console.log(
-        `[acasp_HostScript] getCommentPostWsUrl - Allowed :)`,
-        commentWsUrl
-      );
+      console.log(`[AsBridge] getCommentPostWsUrl - Allowed :)`, commentWsUrl);
       return commentWsUrl;
     }
 
@@ -728,7 +722,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       const hashHex = hashArray
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
-      console.log("[acasp_HostScript] getSHA256Hashsum", hashHex, message);
+      console.log("[AsBridge] getSHA256Hashsum", hashHex, message);
       return hashHex;
     }
 
@@ -755,7 +749,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 
     onWsMessageReceivedFromWebSocketHook(wsOrigin, wsMessage) {
       console.log(
-        "[acasp_HostScript] onWsMessageReceivedFromWebSocketHook",
+        "[AsBridge] onWsMessageReceivedFromWebSocketHook",
         wsOrigin,
         wsMessage
       );
