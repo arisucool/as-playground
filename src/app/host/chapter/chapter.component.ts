@@ -67,6 +67,7 @@ export class ChapterComponent implements OnInit, OnDestroy {
     const chapters = [];
     for (const comment of comments) {
       if (!comment.nickname.match(/^\s*♪\s*$/)) continue;
+      if (!comment.timeSeconds === undefined) continue;
 
       // 曲名コメントから曲名を抽出
       let songName;

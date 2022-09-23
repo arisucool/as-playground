@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HostConfig } from './model/config.interface';
+import { Comment } from './model/comment.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -136,6 +137,14 @@ export class HostService {
   saveConfig() {
     // 設定を保存
     window.localStorage.setItem('acaspHostConfig', JSON.stringify(this.config));
+  }
+
+  /**
+   * 指定時間の待機
+   * @param miliseconds 指定時間
+   */
+  async asyncTimeout(miliseconds: number) {
+    return new Promise((resolve) => setTimeout(resolve, miliseconds));
   }
 
   /**

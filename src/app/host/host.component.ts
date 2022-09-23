@@ -51,6 +51,13 @@ export class HostComponent implements OnInit {
   // 最後に受信したコメント
   public latestComments: any[] = [];
 
+  // 同イベントのリアルタイム視聴時に記録したコメント
+  // (アーカイブ視聴時にコメントのマージを行うために使用)
+  public realtimeRecordedComments: Comment[] = [];
+
+  // リアルタイム視聴時のコメントに対する再生位置 (秒数) の補完
+  isRunningMergeRealtimeRecordedComments = false;
+
   // 汎用
   public objectKeys = Object.keys;
 
@@ -59,6 +66,7 @@ export class HostComponent implements OnInit {
     private changeDetectorRef: ChangeDetectorRef,
     private commentRecorder: CommentRecorderService,
     private dialog: MatDialog,
+    private snackBar: MatSnackBar,
     private hostService: HostService
   ) {}
 
@@ -231,19 +239,46 @@ export class HostComponent implements OnInit {
    * AsBridge (アソビステージのページに注入されたスクリプト) からコメントを受信したときに呼ばれるイベントリスナ
    * @param comments 受信したコメント
    * @param eventName 受信したイベント名
-   * @param currentTimeSeconds 受信した再生位置
+   * @param currentTimeSeconds 受信した再生位置 (アーカイブ視聴時のみ。リアルタイム視聴時は undefined。)
    */
   protected async onReceiveCommentsFromAsBridge(
     comments: Comment[],
     eventName: string,
-    currentTimeSeconds: number
+    currentTimeSeconds?: number
   ) {
-    if (this.eventName !== eventName) {
+    if (eventName !== undefined && this.eventName !== eventName) {
+      // イベント名が設定されたとき
       console.log('onReceiveCommentsFromAsBridge - eventName = ', eventName);
       this.eventName = eventName;
+
+      if (this.pageType === 'ARCHIVE_PLAY_PAGE') {
+        // アーカイブ視聴画面ならば、リアルタイム視聴時に記録したコメントがないか検索
+        this.realtimeRecordedComments =
+          await this.commentRecorder.getCommentsWithTimeSecondsEmptyByEventName(
+            eventName
+          );
+        if (0 < this.realtimeRecordedComments.length) {
+          this.snackBar.open(
+            `リアルタイム視聴時に記録されたコメントが ${this.realtimeRecordedComments.length} 件あります。アーカイブ再生を行うと、一致したコメントをもとにタイムスタンプを補完できます。`,
+            undefined,
+            {
+              duration: 5000,
+            }
+          );
+        }
+        console.log(
+          'onReceiveCommentsFromAsBridge - realtimeRecordedComments = ',
+          this.realtimeRecordedComments
+        );
+        return;
+      } else {
+        this.realtimeRecordedComments = undefined;
+      }
     }
 
-    currentTimeSeconds = Math.floor(currentTimeSeconds);
+    if (currentTimeSeconds !== undefined) {
+      currentTimeSeconds = Math.floor(currentTimeSeconds);
+    }
 
     // 新しいコメントのみを抽出
     // (コメントの取得は、コメントリストのDOM要素から行なっており、ユーザがコメントリストのスクロールを行うと、重複してコメントが取得される場合があるため。)
@@ -262,7 +297,12 @@ export class HostComponent implements OnInit {
       }
 
       // コメントの再生位置 (秒数) を設定
-      comment.timeSeconds = currentTimeSeconds;
+      // (ただし、リアルタイム視聴時は -1 とする)
+      comment.timeSeconds =
+        this.pageType === 'ARCHIVE_PLAY_PAGE' &&
+        currentTimeSeconds !== undefined
+          ? currentTimeSeconds
+          : -1;
 
       // コメントを配列へ追加
       this.allComments[comment.id] = comment;
@@ -280,6 +320,16 @@ export class HostComponent implements OnInit {
       newComments
     );
 
+    // コメントをオーバレイ表示
+    const shouldShowOverlay =
+      (this.pageType === 'REALTIME_PLAY_PAGE' &&
+        this.config.commentOverlay.isEnableCommentOverlayOnRealtimeView) ||
+      (this.pageType === 'ARCHIVE_PLAY_PAGE' &&
+        this.config.commentOverlay.isEnableCommentOverlayOnArchiveView);
+    if (shouldShowOverlay) {
+      this.hostService.showOverlayComments(newComments);
+    }
+
     // コメントをビューアへ転送
     this.sendMessageToViewer({
       type: 'COMMENTS_RECEIVED',
@@ -288,21 +338,155 @@ export class HostComponent implements OnInit {
 
     // ページ種別に応じて処理
     if (this.pageType === 'REALTIME_PLAY_PAGE') {
-      // コメントをオーバレイ表示
-      if (this.config.commentOverlay.isEnableCommentOverlayOnRealtimeView) {
-        this.hostService.showOverlayComments(newComments);
-      }
-    } else if (this.pageType === 'ARCHIVE_PLAY_PAGE') {
-      // コメントをオーバレイ表示
-      if (this.config.commentOverlay.isEnableCommentOverlayOnArchiveView) {
-        this.hostService.showOverlayComments(newComments);
-      }
+      // リアルタイム視聴ページの場合・・・
 
       // コメントをデータベースへ保存
       for (const comment of newComments) {
-        await this.commentRecorder.registerComment(this.eventName, comment);
+        // データベースへ保存 (存在しない場合のみ)
+        try {
+          await this.commentRecorder.registerComment(
+            this.eventName,
+            comment,
+            false
+          );
+        } catch (e: any) {
+          console.warn(e);
+        }
+      }
+    } else if (this.pageType === 'ARCHIVE_PLAY_PAGE') {
+      // アーカイブ視聴ページの場合・・・
+
+      // コメントをデータベースへ保存
+      for (const comment of newComments) {
+        // コメントをデータベースに登録済みか確認
+        const registeredComment = await this.commentRecorder.getCommentById(
+          comment.id
+        );
+
+        if (
+          registeredComment !== undefined &&
+          registeredComment.timeSeconds !== -1
+        ) {
+          // コメントがデータベースに登録済みであり、かつ、コメントの再生位置 (秒数) が設定済みならば
+
+          const diffSeconds = Math.abs(
+            registeredComment.timeSeconds - comment.timeSeconds
+          );
+          if (diffSeconds <= 5 || 60 * 5 <= diffSeconds) {
+            // データベース上のコメントと当該コメントの再生位置 (秒数) が5秒未満なら、または5分以上あるなら、何もしない
+            continue;
+          }
+
+          // データベース上のコメントと当該コメントの再生位置 (秒数) が異なる場合は、その平均値で修正
+          comment.timeSeconds =
+            (registeredComment.timeSeconds + comment.timeSeconds) / 2;
+        }
+
+        // データベースへ保存 (存在する場合は上書き保存)
+        await this.commentRecorder.registerComment(
+          this.eventName,
+          comment,
+          true
+        );
+      }
+
+      // リアルタイム視聴で記録されたコメントがあれば、コメントをマージ
+      if (
+        !this.isRunningMergeRealtimeRecordedComments &&
+        this.realtimeRecordedComments !== undefined &&
+        0 < this.realtimeRecordedComments.length
+      ) {
+        this.isRunningMergeRealtimeRecordedComments = true;
+        const merged = await this.mergeRealtimeRecordedComments(
+          Object.values(this.allComments)
+        );
+
+        this.isRunningMergeRealtimeRecordedComments = false;
+        if (merged) {
+          // マージが行われた場合は、リアルタイム視聴時に記録したコメントをクリア
+          this.realtimeRecordedComments = [];
+        }
       }
     }
+  }
+
+  /**
+   * アーカイブ視聴時のコメントを基にした、リアルタイム視聴時のコメントに対する再生位置 (秒数) の補完 (マージ)
+   * @param comments アーカイブ視聴時のコメント
+   * @returns 補完が行われたか否か
+   */
+  async mergeRealtimeRecordedComments(comments: Comment[]) {
+    if (!this.realtimeRecordedComments) {
+      return false;
+    } else if (comments.length <= 1) {
+      console.log(
+        `[HostComponent] mergeRealtimeRecordedComments - Too few comments (${comments.length})`
+      );
+      return false;
+    }
+
+    // アーカイブ視聴時に記録したコメントがあれば、一致するものを抽出
+    let matchedComments: { archive: Comment; realtimeRecorded: Comment }[] = [];
+    for (const comment of comments) {
+      for (const realtimeRecordedComment of this.realtimeRecordedComments) {
+        console.log(comment.comment, realtimeRecordedComment.comment);
+        if (
+          comment.nickname === realtimeRecordedComment.nickname &&
+          comment.comment === realtimeRecordedComment.comment
+        ) {
+          matchedComments.push({
+            realtimeRecorded: realtimeRecordedComment,
+            archive: comment,
+          });
+          break;
+        }
+      }
+    }
+
+    const rateOfMatchedCommentsWithRealtimeRecordedComments =
+      matchedComments.length / comments.length;
+    if (rateOfMatchedCommentsWithRealtimeRecordedComments < 0.7) {
+      // 70%未満の一致ならば、何もしない
+      console.log(
+        `[HostComponent] mergeRealtimeRecordedComments - Not matched`,
+        rateOfMatchedCommentsWithRealtimeRecordedComments,
+        matchedComments
+      );
+      return false;
+    }
+
+    // 70%以上一致した場合は、アーカイブ視聴時に記録したコメントの再生位置 (秒数) を補完
+    console.log(
+      `[HostComponent] mergeRealtimeRecordedComments - filling up...`,
+      rateOfMatchedCommentsWithRealtimeRecordedComments,
+      matchedComments
+    );
+
+    const message = this.snackBar.open(
+      `リアルタイム視聴時のコメントとマージしています... しばらくお待ちください...`
+    );
+
+    await this.hostService.asyncTimeout(200);
+
+    try {
+      await this.commentRecorder.fillUpTimeSecondsToCommentsBySampledComments(
+        this.eventName,
+        matchedComments,
+        this.realtimeRecordedComments
+      );
+    } catch (e: any) {
+      console.error(e);
+      message.dismiss();
+      this.snackBar.open(
+        `コメントのマージに失敗しました... ${e.toString()}`,
+        'OK'
+      );
+      return false;
+    }
+
+    message.dismiss();
+
+    return true;
   }
 
   /**

@@ -42,9 +42,9 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 
       // ページの種別を特定
       if (
-        window.location.href.match(
-          /archive/ && this.commentListElem && this.playerElem
-        )
+        window.location.href.match(/archive/) &&
+        this.commentListElem &&
+        this.playerElem
       ) {
         this.pageType = "ARCHIVE_PLAY_PAGE"; // アーカイブ再生画面
       } else if (this.commentListElem) {
@@ -68,7 +68,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       // アプリケーションフレームを読み込み
       await this.loadIframe();
 
-      // リアルタイム再生画面ならば
+      // リアルタイム視聴画面ならば
       if (this.pageType == "REALTIME_PLAY_PAGE") {
         // コメント一覧の新着コメントを監視
         this.startCommentWatching();
@@ -77,7 +77,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
         this.setIframeVisiblity(true);
       }
 
-      // アーカイブ再生画面ならば
+      // アーカイブ視聴画面ならば
       if (this.pageType == "ARCHIVE_PLAY_PAGE") {
         // 動画再生領域のタイムスタンプを監視
         this.startPlayerCurrentTimeWatching();
@@ -281,7 +281,7 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
     async loadNicoJS() {
       if (this.NicoJS) {
         return this.NicoJS;
-      } else if (nicoJS) {
+      } else if (typeof nicoJS !== "undefined") {
         return nicoJS;
       }
 
