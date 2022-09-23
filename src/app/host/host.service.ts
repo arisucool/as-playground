@@ -26,7 +26,7 @@ export class HostService {
    * @param seconds 再生位置 (秒数)
    */
   setPlayerCurrentTimeSeconds(seconds: number) {
-    this.sendMessageToHostScript({
+    this.sendMessageToAsBridge({
       type: 'SET_PLAYER_CURRENT_TIME',
       seconds: seconds,
     });
@@ -37,7 +37,7 @@ export class HostService {
    * @param comments
    */
   showOverlayComments(comments: Comment[]) {
-    this.sendMessageToHostScript({
+    this.sendMessageToAsBridge({
       type: 'SHOW_OVERLAY_COMMENTS',
       comments: comments,
     });
@@ -48,7 +48,7 @@ export class HostService {
    * @param value 表示する場合はtrue
    */
   setIframeVisiblity(value: boolean) {
-    this.sendMessageToHostScript({
+    this.sendMessageToAsBridge({
       type: 'SET_IFRAME_VISIBILITY',
       value: value,
     });
@@ -182,7 +182,7 @@ export class HostService {
    * ホストスクリプト (アソビステージのページ) に対するメッセージの送信
    * @param message 送信するメッセージ
    */
-  protected sendMessageToHostScript(message: any) {
+  protected sendMessageToAsBridge(message: any) {
     window.parent.postMessage(message, '*');
   }
 }

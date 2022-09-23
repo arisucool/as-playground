@@ -82,7 +82,7 @@ export class HostComponent implements OnInit {
       this.initPeer();
     }
 
-    this.startMessagingWithHostScript();
+    this.startMessagingWithAsBridge();
 
     await this.commentRecorder.connectDb();
 
@@ -198,26 +198,26 @@ export class HostComponent implements OnInit {
   /**
    * ホストスクリプト (アソビステージのページ) からのメッセージ受信の待受開始
    */
-  protected startMessagingWithHostScript() {
+  protected startMessagingWithAsBridge() {
     window.addEventListener(
       'message',
       (message: MessageEvent) => {
         switch (message.data.type) {
           case 'COMMENTS_RECEIVED':
-            this.onReceiveCommentsFromHostScript(
+            this.onReceiveCommentsFromAsBridge(
               message.data.comments,
               message.data.eventName,
               message.data.currentTimeSeconds
             );
             break;
           case 'PLAYER_CURRENT_TIME_CHANGED':
-            this.onReceivePlayerCurrentTimeFromHostScript(
+            this.onReceivePlayerCurrentTimeFromAsBridge(
               message.data.currentTimeSeconds
             );
             break;
           default:
             console.warn(
-              'startMessagingWithHostScript',
+              'startMessagingWithAsBridge',
               'Unknown message received...',
               message
             );
@@ -233,13 +233,13 @@ export class HostComponent implements OnInit {
    * @param eventName 受信したイベント名
    * @param currentTimeSeconds 受信した再生位置
    */
-  protected async onReceiveCommentsFromHostScript(
+  protected async onReceiveCommentsFromAsBridge(
     comments: Comment[],
     eventName: string,
     currentTimeSeconds: number
   ) {
     if (this.eventName !== eventName) {
-      console.log('onReceiveCommentsFromHostScript - eventName = ', eventName);
+      console.log('onReceiveCommentsFromAsBridge - eventName = ', eventName);
       this.eventName = eventName;
     }
 
@@ -276,7 +276,7 @@ export class HostComponent implements OnInit {
     this.latestComments = newComments;
 
     console.log(
-      `onReceiveCommentsFromHostScript - new comments (${newComments.length}) = `,
+      `onReceiveCommentsFromAsBridge - new comments (${newComments.length}) = `,
       newComments
     );
 
@@ -309,17 +309,17 @@ export class HostComponent implements OnInit {
    * ホストスクリプト (アソビステージのページ) から映像の再生位置を受信したときに呼ばれるイベントリスナ
    * @param currentTime 受信した再生位置 (例: '00:01:30')
    */
-  protected async onReceivePlayerCurrentTimeFromHostScript(
+  protected async onReceivePlayerCurrentTimeFromAsBridge(
     currentTimeSeconds: number
   ) {
     currentTimeSeconds = Math.floor(currentTimeSeconds);
-    console.log('onReceivePlayerCurrentTimeFromHostScript', currentTimeSeconds);
+    console.log('onReceivePlayerCurrentTimeFromAsBridge', currentTimeSeconds);
 
     if (3 <= Math.abs(this.playerCurrentTimeSeconds - currentTimeSeconds)) {
       // 3秒以上の差があれば、シークしたとみなし、既存のオーバレイ再生済みのコメントをクリア
       this.allComments = {};
       console.log(
-        'onReceivePlayerCurrentTimeFromHostScript - Resetting allComments'
+        'onReceivePlayerCurrentTimeFromAsBridge - Resetting allComments'
       );
     }
 

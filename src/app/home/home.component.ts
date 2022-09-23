@@ -30,21 +30,21 @@ export class HomeComponent implements OnInit {
       ? true
       : false;
 
-    let hostScriptUrl = `assets/as-playground-host.js`;
+    let asBridgeUrl = `assets/as-bridge.js`;
     if (
       0 < document.getElementsByTagName('base').length &&
       document.getElementsByTagName('base')[0].href
     ) {
-      hostScriptUrl = `${
+      asBridgeUrl = `${
         document.getElementsByTagName('base')[0].href
-      }${hostScriptUrl}`;
+      }${asBridgeUrl}`;
     } else {
-      hostScriptUrl = `${window.location.protocol}//${window.location.host}/${hostScriptUrl}`;
+      asBridgeUrl = `${window.location.protocol}//${window.location.host}/${asBridgeUrl}`;
     }
 
     this.bookmarkletRaw = HomeComponent.BOOKMARKLET.replace(
       /%HOST_SCRIPT_URL%/g,
-      hostScriptUrl
+      asBridgeUrl
     ).replace(/(\t|\s{2,}|\n)/g, '');
     this.bookmarklet = this.sanitizer.bypassSecurityTrustUrl(
       this.bookmarkletRaw
