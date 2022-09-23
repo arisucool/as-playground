@@ -14,6 +14,7 @@ import { Subscription } from 'rxjs/internal/Subscription';
 import { interval } from 'rxjs/internal/observable/interval';
 import { ViewerMessage } from '../common/viewer-message.interface';
 import { HostAvailableFunctions } from '../common/host-available-functions.interface';
+import { HostConfig, HostTabName } from './model/config.interface';
 
 @Component({
   selector: 'app-host',
@@ -21,7 +22,10 @@ import { HostAvailableFunctions } from '../common/host-available-functions.inter
   styleUrls: ['./host.component.scss'],
 })
 export class HostComponent implements OnInit {
-  // コメントのスマートフォン連携
+  // 設定情報
+  config: HostConfig;
+
+  // スマートフォン連携 (コメントをスマートフォンなどから閲覧する機能) に関する変数
   public peer: Peer;
   public peerId: string;
   public viewerUrl: string;
@@ -31,11 +35,10 @@ export class HostComponent implements OnInit {
   protected readonly HEARTBEAT_DISCONTINUED_THRESHOLD_INTERVAL_MILISECONDS = 10000;
 
   // ページの種別
-  public pageType: string;
+  public pageType: 'REALTIME_PLAY_PAGE' | 'ARCHIVE_PLAY_PAGE' | 'UNKNOWN';
 
   // アクティブなタブ
-  public activeTabName: 'mobileLink' | 'commentAnalysis' | 'chapter' =
-    'mobileLink';
+  public activeTabName: HostTabName;
 
   // ローダー
   public loader: 'chrome_ext' | 'bookmarklet';
@@ -111,7 +114,7 @@ export class HostComponent implements OnInit {
     await this.commentRecorder.connectDb();
 
     // ホストスクリプト (アソビステージのページ) とのメッセージ通信を開始
-    this.startMessagingWithHostScript();
+    this.startMessagingWithAsBridge();
 
     // ビューア (連携中のスマートフォンなど) との接続状態を定期確認するためのタイマを開始
     this.viewerConnectionCheckTimer = interval(1000).subscribe(async () => {
@@ -123,6 +126,16 @@ export class HostComponent implements OnInit {
    * コンポーネントが破棄されるときに呼び出されるイベントリスナ
    */
   ngOnDestroy(): void {}
+
+  /**
+   * 表示するタブの切り替え
+   * @param tabName タブ名
+   */
+  setActiveTab(tabName: HostTabName) {
+    this.activeTabName = tabName;
+    this.config.general.activeTabName = tabName;
+    this.hostService.saveConfig();
+  }
 
   /**
    * コメントのインポート/エクスポートダイアログの表示
@@ -137,11 +150,14 @@ export class HostComponent implements OnInit {
   /**
    * 設定の読み込み
    */
-  protected loadConfig(): void {}
+  protected loadConfig(): void {
+    this.config = this.hostService.getConfig();
+    this.activeTabName = this.config.general.activeTabName;
+  }
 
   /**
    * Skyway のための Peer の初期化
-   * (コメントのスマートフォン連携のための待受を開始)
+   * (スマートフォン連携のための待受を開始)
    */
   protected initPeer(): void {
     if (this.peer) {
@@ -181,20 +197,20 @@ export class HostComponent implements OnInit {
   /**
    * ホストスクリプト (アソビステージのページ) からのメッセージ受信の待受開始
    */
-  protected startMessagingWithHostScript() {
+  protected startMessagingWithAsBridge() {
     window.addEventListener(
       'message',
       (message: MessageEvent) => {
         switch (message.data.type) {
           case 'COMMENTS_RECEIVED':
-            this.onReceiveCommentsFromHostScript(
+            this.onReceiveCommentsFromAsBridge(
               message.data.comments,
               message.data.eventName,
               message.data.currentTimeSeconds
             );
             break;
           case 'PLAYER_CURRENT_TIME_CHANGED':
-            this.onReceivePlayerCurrentTimeFromHostScript(
+            this.onReceivePlayerCurrentTimeFromAsBridge(
               message.data.currentTimeSeconds
             );
             break;
@@ -202,7 +218,7 @@ export class HostComponent implements OnInit {
             this.onReceiveErrorFromHostScript(message.data.errorMessage);
           default:
             console.warn(
-              'startMessagingWithHostScript',
+              'startMessagingWithAsBridge',
               'Unknown message received...',
               message
             );
@@ -218,13 +234,13 @@ export class HostComponent implements OnInit {
    * @param eventName 受信したイベント名
    * @param currentTimeSeconds 受信した再生位置
    */
-  protected async onReceiveCommentsFromHostScript(
+  protected async onReceiveCommentsFromAsBridge(
     comments: Comment[],
     eventName: string,
     currentTimeSeconds: number
   ) {
     if (this.eventName !== eventName) {
-      console.log('onReceiveCommentsFromHostScript - eventName = ', eventName);
+      console.log('onReceiveCommentsFromAsBridge - eventName = ', eventName);
       this.eventName = eventName;
     }
 
@@ -261,12 +277,9 @@ export class HostComponent implements OnInit {
     this.latestComments = newComments;
 
     console.log(
-      `onReceiveCommentsFromHostScript - new comments (${newComments.length}) = `,
+      `onReceiveCommentsFromAsBridge - new comments (${newComments.length}) = `,
       newComments
     );
-
-    // オーバレイでコメントを表示
-    this.hostService.showOverlayComments(newComments);
 
     // コメントをビューアへ転送
     this.sendMessageToViewer({
@@ -274,9 +287,22 @@ export class HostComponent implements OnInit {
       comments: comments,
     });
 
-    // コメントをデータベースへ保存
-    for (const comment of newComments) {
-      await this.commentRecorder.registerComment(this.eventName, comment);
+    // ページ種別に応じて処理
+    if (this.pageType === 'REALTIME_PLAY_PAGE') {
+      // コメントをオーバレイ表示
+      if (this.config.commentOverlay.isEnableCommentOverlayOnRealtimeView) {
+        this.hostService.showOverlayComments(newComments);
+      }
+    } else if (this.pageType === 'ARCHIVE_PLAY_PAGE') {
+      // コメントをオーバレイ表示
+      if (this.config.commentOverlay.isEnableCommentOverlayOnArchiveView) {
+        this.hostService.showOverlayComments(newComments);
+      }
+
+      // コメントをデータベースへ保存
+      for (const comment of newComments) {
+        await this.commentRecorder.registerComment(this.eventName, comment);
+      }
     }
   }
 
@@ -284,17 +310,17 @@ export class HostComponent implements OnInit {
    * ホストスクリプト (アソビステージのページ) から映像の再生位置を受信したときに呼ばれるイベントリスナ
    * @param currentTime 受信した再生位置 (例: '00:01:30')
    */
-  protected async onReceivePlayerCurrentTimeFromHostScript(
+  protected async onReceivePlayerCurrentTimeFromAsBridge(
     currentTimeSeconds: number
   ) {
     currentTimeSeconds = Math.floor(currentTimeSeconds);
-    console.log('onReceivePlayerCurrentTimeFromHostScript', currentTimeSeconds);
+    console.log('onReceivePlayerCurrentTimeFromAsBridge', currentTimeSeconds);
 
     if (3 <= Math.abs(this.playerCurrentTimeSeconds - currentTimeSeconds)) {
       // 3秒以上の差があれば、シークしたとみなし、既存のオーバレイ再生済みのコメントをクリア
       this.allComments = {};
       console.log(
-        'onReceivePlayerCurrentTimeFromHostScript - Resetting allComments'
+        'onReceivePlayerCurrentTimeFromAsBridge - Resetting allComments'
       );
     }
 
@@ -404,7 +430,6 @@ export class HostComponent implements OnInit {
    */
   protected sendMessageToViewer(message: ViewerMessage) {
     if (!this.dataConnection) {
-      console.log('transferMessageToViewer', 'Canceled');
       return;
     }
     console.log('transferMessageToViewer', message);

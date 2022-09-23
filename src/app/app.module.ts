@@ -16,6 +16,7 @@ import { HostComponent } from './host/host.component';
 import { CommentBackupDialogComponent } from './host/comment-backup/comment-backup-dialog.component';
 import { CommentAnalysisComponent } from './host/comment-analysis/comment-analysis.component';
 import { ChapterComponent } from './host/chapter/chapter.component';
+import { CommentOverlayComponent } from './host/comment-overlay/comment-overlay.component';
 
 @NgModule({
   declarations: [
@@ -26,6 +27,7 @@ import { ChapterComponent } from './host/chapter/chapter.component';
     CommentBackupDialogComponent,
     CommentAnalysisComponent,
     ChapterComponent,
+    CommentOverlayComponent,
   ],
   imports: [
     BrowserModule,

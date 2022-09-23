@@ -1,17 +1,32 @@
 import { Injectable } from '@angular/core';
+import { HostConfig } from './model/config.interface';
 
 @Injectable({
   providedIn: 'root',
 })
 export class HostService {
-  constructor() {}
+  // 設定
+  readonly DEFAULT_CONFIG: HostConfig = {
+    general: {
+      activeTabName: 'mobileLink',
+    },
+    commentOverlay: {
+      isEnableCommentOverlayOnRealtimeView: false,
+      isEnableCommentOverlayOnArchiveView: true,
+    },
+  };
+  config: HostConfig;
+
+  constructor() {
+    this.loadConfig();
+  }
 
   /**
    * 動画の再生位置の設定
    * @param seconds 再生位置 (秒数)
    */
   setPlayerCurrentTimeSeconds(seconds: number) {
-    this.sendMessageToHostScript({
+    this.sendMessageToAsBridge({
       type: 'SET_PLAYER_CURRENT_TIME',
       seconds: seconds,
     });
@@ -22,7 +37,7 @@ export class HostService {
    * @param comments
    */
   showOverlayComments(comments: Comment[]) {
-    this.sendMessageToHostScript({
+    this.sendMessageToAsBridge({
       type: 'SHOW_OVERLAY_COMMENTS',
       comments: comments,
     });
@@ -33,7 +48,7 @@ export class HostService {
    * @param value 表示する場合はtrue
    */
   setIframeVisiblity(value: boolean) {
-    this.sendMessageToHostScript({
+    this.sendMessageToAsBridge({
       type: 'SET_IFRAME_VISIBILITY',
       value: value,
     });
@@ -45,7 +60,7 @@ export class HostService {
    * @param comment コメント本文
    */
   postComment(nickname: string, comment: string) {
-    this.sendMessageToHostScript({
+    this.sendMessageToAsBridge({
       type: 'POST_COMMENT',
       nickname,
       comment,
@@ -119,10 +134,68 @@ export class HostService {
   }
 
   /**
+   * 設定の取得
+   * @returns 設定
+   */
+  getConfig(): HostConfig {
+    if (this.config === undefined) this.loadConfig();
+
+    return this.config;
+  }
+
+  /**
+   * 設定の保存
+   */
+  saveConfig() {
+    // 設定を保存
+    window.localStorage.setItem('acaspHostConfig', JSON.stringify(this.config));
+  }
+
+  /**
+   * 設定の読み込み
+   */
+  protected loadConfig() {
+    let config: HostConfig = undefined;
+
+    const configJson = window.localStorage.getItem('acaspHostConfig');
+
+    if (configJson) {
+      try {
+        config = JSON.parse(configJson);
+      } catch (e) {
+        console.warn(`[HostService] Failed to parse config...`, config);
+      }
+    }
+
+    // 不足している設定をマージ
+    if (config == undefined) {
+      config = this.DEFAULT_CONFIG;
+    } else {
+      for (const configCategory of Object.keys(this.DEFAULT_CONFIG)) {
+        if (configCategory in config === false) {
+          config[configCategory] = this.DEFAULT_CONFIG[configCategory];
+          continue;
+        }
+
+        for (const configKey of Object.keys(
+          this.DEFAULT_CONFIG[configCategory]
+        )) {
+          if (configKey in config[configCategory] === false) {
+            config[configCategory][configKey] =
+              this.DEFAULT_CONFIG[configCategory][configKey];
+          }
+        }
+      }
+    }
+
+    this.config = config;
+  }
+
+  /**
    * ホストスクリプト (アソビステージのページ) に対するメッセージの送信
    * @param message 送信するメッセージ
    */
-  protected sendMessageToHostScript(message: any) {
+  protected sendMessageToAsBridge(message: any) {
     window.parent.postMessage(message, '*');
   }
 }

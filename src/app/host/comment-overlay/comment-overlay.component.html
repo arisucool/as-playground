@@ -1,0 +1,25 @@
+<mat-card>
+  <mat-card-header>リアルタイム視聴時</mat-card-header>
+  <mat-card-content>
+    <p>
+      <mat-checkbox
+        [(ngModel)]="config.isEnableCommentOverlayOnRealtimeView"
+        (ngModelChange)="onChangeConfig($event)"
+        >映像にコメントをオーバレイ表示する</mat-checkbox
+      >
+    </p>
+  </mat-card-content>
+</mat-card>
+
+<mat-card>
+  <mat-card-header>アーカイブ視聴時</mat-card-header>
+  <mat-card-content>
+    <p>
+      <mat-checkbox
+        [(ngModel)]="config.isEnableCommentOverlayOnArchiveView"
+        (ngModelChange)="onChangeConfig($event)"
+        >映像にコメントをオーバレイ表示する</mat-checkbox
+      >
+    </p>
+  </mat-card-content>
+</mat-card>
