@@ -13,6 +13,7 @@ import { HostService } from './host.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { interval } from 'rxjs/internal/observable/interval';
 import { HostConfig, HostTabName } from './model/config.interface';
+import qrcodeParser from 'qrcode-parser';
 
 @Component({
   selector: 'app-host',
@@ -223,9 +224,12 @@ export class HostComponent implements OnInit {
               message.data.currentTimeSeconds
             );
             break;
+          case 'QR_CODE_OF_ASOBI_LIGHT_RECEIVED':
+            this.onReceiveQrCodeOfAsobiLightFromAsBridge(message.data.dataUrl);
+            break;
           default:
             console.warn(
-              'startMessagingWithAsBridge',
+              '[HostComponent] startMessagingWithAsBridge',
               'Unknown message received...',
               message
             );
@@ -510,6 +514,45 @@ export class HostComponent implements OnInit {
     this.playerCurrentTimeSeconds = currentTimeSeconds;
   }
 
+  protected async onReceiveQrCodeOfAsobiLightFromAsBridge(dataUrl: string) {
+    if (!dataUrl) return;
+    console.log(
+      '[HostComponent] onReceiveQrCodeOfAsobiLightFromAsBridge - QR Code = ',
+      dataUrl
+    );
+
+    let parsedString;
+    try {
+      parsedString = await qrcodeParser(dataUrl);
+    } catch (e) {
+      console.error(
+        '[HostComponent] onReceiveQrCodeOfAsobiLightFromAsBridge - Failed to parse QR Code',
+        e
+      );
+      return;
+    }
+
+    if (
+      !parsedString.startsWith('http://') &&
+      !parsedString.startsWith('https://')
+    ) {
+      console.error(
+        '[HostComponent] onReceiveQrCodeOfAsobiLightFromAsBridge - Invalid url',
+        parsedString
+      );
+      return;
+    }
+
+    console.log(
+      '[HostComponent] onReceiveQrCodeOfAsobiLightFromAsBridge - Sending AsobiLight url to viewer...',
+      parsedString
+    );
+    this.sendMessageToViewer({
+      type: 'URL_OF_ASOBI_LIGHT_RECEIVED',
+      url: parsedString,
+    });
+  }
+
   /**
    * ビューア (連携中のスマートフォンなど) からメッセージを受信したときに呼ばれるイベントリスナ
    * @param message 受信したメッセージ
@@ -524,6 +567,13 @@ export class HostComponent implements OnInit {
           'onReceiveMessageFromViewer - Received heartbeat from viewer',
           this.viewerHeartbeatReceivedAt
         );
+        break;
+      case 'GET_URL_OF_ASOBI_LIGHT':
+        console.log(
+          'onReceiveMessageFromViewer - Requesting DataURL of QRCode for AsobiLight...',
+          this.viewerHeartbeatReceivedAt
+        );
+        this.hostService.requestQrCodeDataUrlOfAsobiLight();
         break;
       default:
         console.warn(

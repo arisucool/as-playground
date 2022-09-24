@@ -1,5 +1,16 @@
 <div class="toolbar-override">
   <button
+    (click)="toggleAsobiLight()"
+    mat-icon-button
+    aria-label="アソビライト"
+    [matTooltip]="
+      isEnableAsobiLight ? 'アソビライトを表示' : 'アソビライトを隠す'
+    "
+  >
+    <mat-icon>highlight</mat-icon>
+  </button>
+
+  <button
     (click)="setNoSleep(true)"
     *ngIf="!enableNoSleep"
     mat-icon-button
@@ -43,15 +54,23 @@
     </ng-container>
   </div>
 
-  <mat-list class="comments">
-    <mat-list-item *ngFor="let comment of comments.slice().reverse()">
-      <h3 matLine [style.color]="comment.nicknameColor">
-        {{ comment.nickname }}
-      </h3>
-      <p matLine>
-        <span> {{ comment.comment }} </span>
-      </p>
-    </mat-list-item>
-  </mat-list>
+  <div class="comments-container" [ngClass]="{ half: isEnableAsobiLight }">
+    <mat-list class="comments">
+      <mat-list-item *ngFor="let comment of comments.slice().reverse()">
+        <h3 matLine [style.color]="comment.nicknameColor">
+          {{ comment.nickname }}
+        </h3>
+        <p matLine>
+          <span> {{ comment.comment }} </span>
+        </p>
+      </mat-list-item>
+    </mat-list>
+  </div>
 
+  <iframe
+    class="asobi-light-frame"
+    *ngIf="asobiLightUrl && isEnableAsobiLight"
+    [src]="asobiLightUrl"
+  >
+  </iframe>
 </div>

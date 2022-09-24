@@ -56,6 +56,15 @@ export class HostService {
   }
 
   /**
+   * アソビライトをスマホから扱うためのQRコードのリクエスト
+   */
+  requestQrCodeDataUrlOfAsobiLight() {
+    this.sendMessageToAsBridge({
+      type: 'REQUEST_QR_CODE_OF_ASOBI_LIGHT',
+    });
+  }
+
+  /**
    * 時刻または再生位置を秒数へ変換
    * @param timeString 時刻または再生位置の文字列 (例: '00:01:30' または '00:01)
    * @returns 秒数 (例: 90)

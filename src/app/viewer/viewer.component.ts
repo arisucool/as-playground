@@ -7,6 +7,7 @@ import { environment } from './../../environments/environment';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { interval } from 'rxjs/internal/observable/interval';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-viewer',
@@ -30,10 +31,15 @@ export class ViewerComponent implements OnInit, OnDestroy {
   protected heartbeatTimer: Subscription;
   protected readonly HEARTBEAT_INTERVAL_MILISECONDS = 4000;
 
+  // アソビライト
+  public asobiLightUrl: SafeUrl;
+  public isEnableAsobiLight = false;
+
   constructor(
     protected route: ActivatedRoute,
     private changeDetectorRef: ChangeDetectorRef,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private domSanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -98,6 +104,8 @@ export class ViewerComponent implements OnInit, OnDestroy {
         if (!data.type) return;
         if (data.type == 'COMMENTS_RECEIVED') {
           this.onReceivedNewComment(data.comments);
+        } else if (data.type == 'URL_OF_ASOBI_LIGHT_RECEIVED') {
+          this.onReceivedUrlOfAsobiLight(data.url);
         }
       });
 
@@ -109,6 +117,27 @@ export class ViewerComponent implements OnInit, OnDestroy {
     });
   }
 
+  toggleAsobiLight() {
+    if (this.asobiLightUrl === undefined) {
+      this.startAsobiLight();
+      return;
+    }
+    this.isEnableAsobiLight = !this.isEnableAsobiLight;
+  }
+
+  startAsobiLight() {
+    this.snackBar.open(
+      'アソビライトのスマホ連携を有効にしています... お待ちください...',
+      null,
+      {
+        duration: 3000,
+      }
+    );
+    this.sendMessageToHost({
+      type: 'GET_URL_OF_ASOBI_LIGHT',
+    });
+  }
+
   onReceivedNewComment(receivedComments: Comment[]) {
     let comments = this.comments.concat(receivedComments.reverse());
     while (this.NUM_OF_MAX_COMMENTS < comments.length) {
@@ -117,6 +146,13 @@ export class ViewerComponent implements OnInit, OnDestroy {
     this.comments = comments;
 
     this.changeDetectorRef.detectChanges();
+  }
+
+  onReceivedUrlOfAsobiLight(url: string) {
+    this.asobiLightUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(url);
+    this.isEnableAsobiLight = true;
+    this.changeDetectorRef.detectChanges();
+    //window.open(url, 'asobilight', 'noreferrer');
   }
 
   setNoSleep(enable: boolean) {
