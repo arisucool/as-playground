@@ -160,6 +160,8 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
         this.showOverlayComments(message.data.comments);
       } else if (message.data.type === "SET_PLAYER_CURRENT_TIME") {
         this.setPlayerCurrentTime(message.data.seconds);
+      } else if (message.data.type === "REQUEST_QR_CODE_OF_ASOBI_LIGHT") {
+        this.requestQRCodeDataUrlOfAsobiLight();
       }
     }
 
@@ -485,6 +487,64 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       }
 
       return comments.slice().reverse();
+    }
+
+    async requestQRCodeDataUrlOfAsobiLight() {
+      const dataUrl = await this.getQRCodeDataUrlOfAsobiLight();
+      this.iframeElem.contentWindow.postMessage(
+        {
+          type: "QR_CODE_OF_ASOBI_LIGHT_RECEIVED",
+          dataUrl: dataUrl,
+        },
+        "*"
+      );
+    }
+
+    async getQRCodeDataUrlOfAsobiLight() {
+      return new Promise((resolve, reject) => {
+        const asobiLightPanelBtnElem = document.querySelector(
+          ".style_asobilight__S-G3r"
+        );
+        if (!asobiLightPanelBtnElem)
+          return reject("アソビライトを制御するための要素が見つかりません");
+
+        // アソビライトの設定パネルを開く
+        asobiLightPanelBtnElem.dataset.visible = "true";
+
+        // "スマホで操作" をクリック
+        const btn = document.querySelector(
+          "button.asobilightSetting_setting_controller_btn__efnCU"
+        );
+        if (btn) btn.click();
+
+        // 少し待つ
+        setTimeout(() => {
+          const qrCodeImgElem = document.querySelector(
+            ".asobilightSetting_connect_image_qr__1qyzj img"
+          );
+          if (!qrCodeImgElem) throw new Error("");
+          console.log(
+            `[AsBridge] getQRCodeDataUrlOfAsobiLight -  Found QRCode element...`,
+            qrCodeImgElem
+          );
+
+          const canvas = document.createElement("canvas");
+          canvas.width = qrCodeImgElem.width * 2;
+          canvas.height = qrCodeImgElem.height * 2;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(qrCodeImgElem, 0, 0);
+
+          asobiLightPanelBtnElem.dataset.visible = "false";
+
+          const dataUrl = canvas.toDataURL();
+          console.log(
+            `[AsBridge] getQRCodeDataUrlOfAsobiLight -  Got dataUrl...`,
+            dataUrl
+          );
+          return resolve(dataUrl);
+        }, 500);
+      });
     }
 
     getPlayerCurrentTime() {
