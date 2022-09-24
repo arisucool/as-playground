@@ -81,6 +81,14 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       if (this.pageType == "ARCHIVE_PLAY_PAGE") {
         // 動画再生領域のタイムスタンプを監視
         this.startPlayerCurrentTimeWatching();
+      }
+
+      if (this.pageType !== "UNKNOWN") {
+        // コメント一覧の新着コメントを監視
+        this.startCommentWatching();
+
+        // アプリケーションフレームを表示
+        this.setIframeVisiblity(true);
 
         // コメント表示のための領域を生成
         this.initOverlayCommentsElem();
@@ -102,12 +110,6 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
           this.onResizeWindow();
         };
         window.addEventListener("resize", this.onResizeWindow);
-
-        // コメント一覧の新着コメントを監視
-        this.startCommentWatching();
-
-        // アプリケーションフレームを表示
-        this.setIframeVisiblity(true);
       }
 
       // SPA のページ遷移の監視
@@ -280,10 +282,16 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 
     async loadNicoJS() {
       if (this.NicoJS) {
+        console.log(
+          `[AsBridge] loadNicoJS - NicoJS loaded with using constructor...`
+        );
         return this.NicoJS;
       } else if (typeof nicoJS !== "undefined") {
+        console.log(`[AsBridge] loadNicoJS - NicoJS Already loaded...`);
         return nicoJS;
       }
+
+      console.log(`[AsBridge] loadNicoJS - Loading NicoJS...`);
 
       return new Promise((resolve, reject) => {
         const script = document.createElement("script");
