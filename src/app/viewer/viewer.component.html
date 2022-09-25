@@ -7,7 +7,8 @@
       isEnableAsobiLight ? 'アソビライトを隠す' : 'アソビライトを表示'
     "
   >
-    <mat-icon>highlight</mat-icon>
+    <mat-icon *ngIf="isEnableAsobiLight">flashlight_on</mat-icon>
+    <mat-icon *ngIf="!isEnableAsobiLight">flashlight_off</mat-icon>
   </button>
 
   <button
@@ -20,7 +21,8 @@
         : '画面スリープを抑制する'
     "
   >
-    <mat-icon>lock_open</mat-icon>
+    <mat-icon *ngIf="isEnableNoSleep">lock</mat-icon>
+    <mat-icon *ngIf="!isEnableNoSleep">lock_open</mat-icon>
   </button>
 </div>
 

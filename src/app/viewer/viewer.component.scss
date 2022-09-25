@@ -35,6 +35,10 @@
   top: 0;
   height: 64px;
   z-index: 110;
+
+  button {
+    margin: 0 0.5rem 0 0.5rem;
+  }
 }
 
 @media (max-width: 599px) {
