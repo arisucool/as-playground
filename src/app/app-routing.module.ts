@@ -22,6 +22,10 @@ const routes: Routes = [
     path: 'viewer/:hostPeerId',
     component: ViewerComponent,
   },
+  {
+    path: 'v/:hostPeerId',
+    component: ViewerComponent,
+  },
 ];
 
 @NgModule({

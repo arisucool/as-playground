@@ -114,6 +114,14 @@ export class HostService {
   }
 
   /**
+   * PeerID の生成
+   * @returns 生成された PeerID
+   */
+  generatePeerId() {
+    return (crypto as any).randomUUID();
+  }
+
+  /**
    * ビューアのURLの生成
    * @param hostPeerId Peer ID
    * @returns URL
@@ -123,11 +131,9 @@ export class HostService {
       0 < document.getElementsByTagName('base').length &&
       document.getElementsByTagName('base')[0].href
     ) {
-      return `${
-        document.getElementsByTagName('base')[0].href
-      }viewer/${hostPeerId}`;
+      return `${document.getElementsByTagName('base')[0].href}v/${hostPeerId}`;
     }
-    return `${window.location.protocol}//${window.location.host}/viewer/${hostPeerId}`;
+    return `${window.location.protocol}//${window.location.host}/v/${hostPeerId}`;
   }
 
   /**

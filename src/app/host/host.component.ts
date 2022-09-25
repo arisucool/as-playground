@@ -143,13 +143,14 @@ export class HostComponent implements OnInit {
       this.peer = null;
     }
 
-    const previousPeerId = window.sessionStorage.getItem('skywayPeerId');
+    const previousPeerId = window.localStorage.getItem('skywayPeerId');
     if (previousPeerId) {
       console.log('Initializing Peer...', previousPeerId);
       this.peer = new Peer(previousPeerId, { key: environment.skyWayApiKey });
     } else {
-      console.log('Initializing Peer...');
-      this.peer = new Peer({ key: environment.skyWayApiKey });
+      const peerId = this.hostService.generatePeerId();
+      console.log('Initializing Peer...', peerId);
+      this.peer = new Peer(peerId, { key: environment.skyWayApiKey });
     }
 
     this.peer.on('open', () => {
@@ -159,7 +160,7 @@ export class HostComponent implements OnInit {
       this.changeDetectorRef.detectChanges();
 
       // Peer ID を保存
-      window.sessionStorage.setItem('skywayPeerId', this.peerId);
+      window.localStorage.setItem('skywayPeerId', this.peerId);
     });
 
     this.peer.on('close', () => {

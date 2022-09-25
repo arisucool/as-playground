@@ -10,7 +10,7 @@ export class AppComponent {
   title = 'as-playground';
 
   ngOnInit() {
-    if (window.location.pathname.match(/\/viewer/)) {
+    if (window.location.pathname.match(/^\/(viewer|v)\//)) {
       this.theme = 'dark';
     }
   }
