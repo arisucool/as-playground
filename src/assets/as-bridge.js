@@ -9,6 +9,13 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       this.baseUrl = options && options.baseUrl ? options.baseUrl : null;
       this.NicoJS = options && options.nicoJS ? options.nicoJS : null;
       this.asBridgeRevision = 1;
+
+      this.domSelectors = {
+        commentViewer: '[class^="commentViewer_commentViewer__"]',
+        commentList: '[class^="commentViewer_commentList__"]',
+        playerContainer: ".video-js",
+        player: "video.vjs-tech",
+      };
     }
 
     async init() {
@@ -28,17 +35,17 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 
       // コメント一覧の要素を取得
       this.commentViewerElem = document.body.querySelector(
-        '[class^="commentViewer_commentViewer__"]'
+        this.domSelectors.commentViewer
       );
       this.commentListElem = this.commentViewerElem
-        ? this.commentViewerElem.querySelector(
-            '[class^="commentViewer_commentList__"]'
-          )
+        ? this.commentViewerElem.querySelector(this.domSelectors.commentList)
         : null;
 
       // 動画再生領域の要素を取得 (動画にあわせてコメントを重ねて表示するために使用)
-      this.playerElem = document.body.querySelector("video.vjs-tech");
-      this.playerContainerElem = document.body.querySelector(".video-js");
+      this.playerElem = document.body.querySelector(this.domSelectors.player);
+      this.playerContainerElem = document.body.querySelector(
+        this.domSelectors.playerContainer
+      );
 
       // ページの種別を特定
       if (
@@ -60,8 +67,8 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       );
 
       // window.postMessage を介したメッセージを取得するためのイベントリスナを設定
-      this.listeners.message = (message) => {
-        this.onReceiveMessageFromIframe(message);
+      this.listeners.message = async (message) => {
+        await this.onReceiveMessageFromIframe(message);
       };
       window.addEventListener("message", this.listeners.message, false);
 
@@ -143,14 +150,14 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
       }
     }
 
-    onReceiveMessageFromIframe(message) {
+    async onReceiveMessageFromIframe(message) {
       if (!message.data || !message.data.type) return;
 
       if (message.origin.indexOf(this.getOwnBaseUrl()) == -1) {
         console.log("Message received from other frame", message);
+      } else {
+        console.log("Message received from iframe", message);
       }
-
-      console.log("Message received from iframe", message);
 
       if (message.data.type == "SET_IFRAME_VISIBILITY") {
         this.setIframeVisiblity(message.data.value);
@@ -160,6 +167,36 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
         this.setPlayerCurrentTime(message.data.seconds);
       } else if (message.data.type === "REQUEST_QR_CODE_OF_ASOBI_LIGHT") {
         this.requestQRCodeDataUrlOfAsobiLight();
+      }
+
+      try {
+        switch (message.data.type) {
+          case "INIT_AS_BRIDGE":
+            await this.init();
+          case "GET_ELEMENT":
+            const html = await this.getElement(message.data.selector);
+            this.sendMessageToIframe({
+              type: "GET_ELEMENT",
+              replyTo: message.data.messageId,
+              html: html,
+            });
+            break;
+          case "CLICK_ELEMENT":
+            await this.clickElement(message.data.selector);
+            this.sendMessageToIframe({
+              type: "CLICK_ELEMENT",
+              replyTo: message.data.messageId,
+              result: true,
+            });
+            break;
+        }
+      } catch (e) {
+        console.error(e);
+        this.sendMessageToIframe({
+          type: message.data.type,
+          replyTo: message.data.messageId,
+          error: e.message,
+        });
       }
     }
 
@@ -281,18 +318,20 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
     }
 
     async loadNicoJS() {
-      if (this.NicoJS) {
+      if (typeof nicoJS !== "undefined") {
+        // NicoJS が既に読み込まれている場合・・・
+        console.log(`[AsBridge] loadNicoJS - NicoJS Already loaded...`);
+        return nicoJS;
+      } else if (this.NicoJS) {
+        // Chrome 拡張機能版の場合・・・
         console.log(
           `[AsBridge] loadNicoJS - NicoJS loaded with using constructor...`
         );
         return this.NicoJS;
-      } else if (typeof nicoJS !== "undefined") {
-        console.log(`[AsBridge] loadNicoJS - NicoJS Already loaded...`);
-        return nicoJS;
       }
 
+      // ブックマークレット版の場合・・・
       console.log(`[AsBridge] loadNicoJS - Loading NicoJS...`);
-
       return new Promise((resolve, reject) => {
         const script = document.createElement("script");
         script.onload = () => {
@@ -484,6 +523,42 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
         },
         "*"
       );
+    }
+
+    async getElement(selector) {
+      const html = document.querySelector(selector).outerHTML;
+    }
+
+    async clickElement(selector) {
+      const elem = document.querySelector(selector);
+      if (!elem) throw new Error(`Element not found: ${selector}`);
+
+      elem.click();
+    }
+
+    async setDataset(selector, key, value) {
+      const elem = document.querySelector(selector);
+      if (!elem) return;
+
+      elem.dataset[key] = value;
+    }
+
+    sendMessageToIframe(message) {
+      this.iframeElem.contentWindow.postMessage(message, "*");
+    }
+
+    async getDataUrlByImageElement(selector) {
+      const imageElem = document.querySelector(selector);
+      if (!imageElem) return;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = imageElem.naturalWidth;
+      canvas.height = imageElem.naturalHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(imageElem, 0, 0);
+
+      return canvas.toDataURL();
     }
 
     async getQRCodeDataUrlOfAsobiLight() {
