@@ -154,8 +154,6 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
 
       if (message.data.type == "SET_IFRAME_VISIBILITY") {
         this.setIframeVisiblity(message.data.value);
-      } else if (message.data.type == "OPEN_PLAYER_FRAME_PAGE") {
-        this.openPlayerFramePage();
       } else if (message.data.type == "SHOW_OVERLAY_COMMENTS") {
         this.showOverlayComments(message.data.comments);
       } else if (message.data.type === "SET_PLAYER_CURRENT_TIME") {
@@ -330,18 +328,6 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
         this.iframeElem.style.display = "none";
         this.toggleBtnElem.style.bottom = "-2px";
       }
-    }
-
-    openPlayerFramePage() {
-      if (!this.playerFrameElem) {
-        window.alert("エラー: プレーヤーのURLを特定できません");
-        return;
-      }
-
-      const playerFrameUrl = this.playerFrameElem.src;
-      const openedWindow = window.open(playerFrameUrl);
-      openedWindow.blur();
-      window.focus();
     }
 
     showOverlayComments(comments) {
