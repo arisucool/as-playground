@@ -529,8 +529,8 @@ if (typeof acasp_AsBridgeInstance !== "undefined") {
           );
 
           const canvas = document.createElement("canvas");
-          canvas.width = qrCodeImgElem.width * 2;
-          canvas.height = qrCodeImgElem.height * 2;
+          canvas.width = qrCodeImgElem.naturalWidth;
+          canvas.height = qrCodeImgElem.naturalHeight;
 
           const ctx = canvas.getContext("2d");
           ctx.drawImage(qrCodeImgElem, 0, 0);
