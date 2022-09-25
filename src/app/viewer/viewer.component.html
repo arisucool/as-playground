@@ -2,31 +2,25 @@
   <button
     (click)="toggleAsobiLight()"
     mat-icon-button
-    aria-label="アソビライト"
+    aria-label="アソビライトを表示/非表示"
     [matTooltip]="
-      isEnableAsobiLight ? 'アソビライトを表示' : 'アソビライトを隠す'
+      isEnableAsobiLight ? 'アソビライトを隠す' : 'アソビライトを表示'
     "
   >
     <mat-icon>highlight</mat-icon>
   </button>
 
   <button
-    (click)="setNoSleep(true)"
-    *ngIf="!enableNoSleep"
+    (click)="setNoSleep(!isEnableNoSleep)"
     mat-icon-button
-    aria-label="画面スリープを抑制する"
-    matTooltip="画面スリープを抑制する"
+    aria-label="画面スリープの抑制を有効化/無効化"
+    [matTooltip]="
+      isEnableNoSleep
+        ? '画面スリープの抑制を解除する'
+        : '画面スリープを抑制する'
+    "
   >
     <mat-icon>lock_open</mat-icon>
-  </button>
-  <button
-    (click)="setNoSleep(false)"
-    *ngIf="enableNoSleep"
-    mat-icon-button
-    aria-label="画面スリープの抑制を解除する"
-    matTooltip="画面スリープの抑制を解除する"
-  >
-    <mat-icon>lock</mat-icon>
   </button>
 </div>
 
@@ -67,10 +61,18 @@
     </mat-list>
   </div>
 
-  <iframe
-    class="asobi-light-frame"
+  <div
+    class="asobi-light-frame-container"
     *ngIf="asobiLightUrl && isEnableAsobiLight"
-    [src]="asobiLightUrl"
   >
-  </iframe>
+    <button
+      mat-button
+      class="popout-button"
+      matTooltip="アソビライトを新しいタブで開く"
+      (click)="openAsobiLightOnNewTab()"
+    >
+      <mat-icon>open_in_new</mat-icon>
+    </button>
+    <iframe class="asobi-light-frame" [src]="asobiLightUrl"> </iframe>
+  </div>
 </div>

@@ -22,7 +22,7 @@ export class ViewerComponent implements OnInit, OnDestroy {
   public errorText: string;
 
   protected noSleep: NoSleep;
-  public enableNoSleep: boolean = false;
+  public isEnableNoSleep: boolean = false;
 
   public comments: Comment[] = [];
   protected readonly NUM_OF_MAX_COMMENTS = 500;
@@ -33,6 +33,7 @@ export class ViewerComponent implements OnInit, OnDestroy {
 
   // アソビライト
   public asobiLightUrl: SafeUrl;
+  public asobiLightRawUrl: string;
   public isEnableAsobiLight = false;
 
   constructor(
@@ -149,16 +150,24 @@ export class ViewerComponent implements OnInit, OnDestroy {
   }
 
   onReceivedUrlOfAsobiLight(url: string) {
-    this.asobiLightUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(url);
+    this.asobiLightRawUrl = url;
+    this.asobiLightUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(
+      this.asobiLightRawUrl
+    );
     this.isEnableAsobiLight = true;
     this.changeDetectorRef.detectChanges();
-    //window.open(url, 'asobilight', 'noreferrer');
+  }
+
+  openAsobiLightOnNewTab() {
+    if (this.asobiLightRawUrl === undefined) return;
+    window.open(this.asobiLightRawUrl, 'asobilight', 'noreferrer');
+    this.isEnableAsobiLight = false;
   }
 
   setNoSleep(enable: boolean) {
     if (enable) {
       this.noSleep.enable();
-      this.enableNoSleep = true;
+      this.isEnableNoSleep = true;
       this.snackBar.open('画面スリープを抑制中です', null, {
         duration: 1000,
       });
@@ -166,7 +175,7 @@ export class ViewerComponent implements OnInit, OnDestroy {
     }
 
     this.noSleep.disable();
-    this.enableNoSleep = false;
+    this.isEnableNoSleep = false;
     this.snackBar.open('画面スリープの抑制を解除しました', null, {
       duration: 1000,
     });
